@@ -30,6 +30,7 @@ SOFTWARE.
 #include <errno.h>
 
 uint16_t curr_ip;
+uint16_t old_ip;
 uint8_t prog_mem[4096];	// maximum amount of ROM = 4K
 
 uint16_t curr_label;
@@ -41,6 +42,8 @@ uint16_t label_ref_loc[4096];
 uint16_t curr_refs;
 
 uint16_t curr_line;
+
+char *listing[4096];
 
 void add_label(char *label)
 {
@@ -505,6 +508,7 @@ void compile(char *line)
 		} else
 		if (strcmp(token, "*=") == 0) {
 			curr_ip = parse_12bit();
+			old_ip = curr_ip;
 		}
 		else {
 			printf("Syntax error: unknown opcode in line %d: %s\n",
@@ -555,7 +559,18 @@ int main(int argc, char **argv)
 			line[strlen(line)-1] = 0;
 		}
 		if (strlen(line) != 0) {
+			old_ip = curr_ip;
+			char *old_line = strdup(line);
 			compile(line);
+			if (curr_ip != old_ip) {
+				listing[old_ip] = malloc(strlen(old_line) + 32);
+				sprintf(listing[old_ip], "%03X  ", old_ip);
+				for (uint16_t i = old_ip; i < curr_ip; i++) {
+					sprintf(listing[old_ip]+4+3*(i-old_ip), "%02X              ", prog_mem[i]);
+				}
+				sprintf(listing[old_ip]+12, "%s", old_line);
+			}
+			free(old_line);
 		}
 	}
 
@@ -573,8 +588,15 @@ int main(int argc, char **argv)
 			if (strcmp(label_name[j], symbol) == 0) {
 				ref_found = true;
 				prog_mem[loc] = label_addr[j] & 0xFF;
+
+				sprintf(listing[loc-1] + 7, "%02X", label_addr[j] & 0xFF);
+				*(listing[loc-1] + 9) = 0x20;
+
 				if (prog_mem[loc-1] == 0x40 || prog_mem[loc-1] == 0x50) {
 					prog_mem[loc-1] |= (label_addr[j] >> 8) & 0x0F;
+
+					sprintf(listing[loc-1] + 4, "%02X", prog_mem[loc-1]);
+					*(listing[loc-1] + 6) = 0x20;
 				}
 				break;
 			}
@@ -599,5 +621,13 @@ int main(int argc, char **argv)
 	}
 
 	fclose(f);
+
+	for (int i = 0; i < curr_ip; i++) {
+		if (listing[i]) {
+			fprintf(stdout, "%s\n", listing[i]);
+			free(listing[i]);
+		}
+
+	}
 	return 0;
 }
