@@ -29,6 +29,12 @@ SOFTWARE.
 #include <string.h>
 #include <errno.h>
 
+#define SYNTAX_ERR(format, ...) \
+	fprintf(stderr, "Syntax error in line %d: "format, \
+	curr_line, ##__VA_ARGS__)
+
+#define VERSION "1.0"
+
 uint16_t curr_ip;
 uint16_t old_ip;
 uint8_t prog_mem[4096];	// maximum amount of ROM = 4K
@@ -57,8 +63,7 @@ uint8_t parse_reg()
 {
 	char *reg = strtok(NULL, " \t,");
 	if (!reg) {
-		printf("Syntax error in line %d: missing register\n",
-			curr_line);
+		SYNTAX_ERR("missing register\n");
 		exit(-1);
 	}
 	if (strcmp(reg, "R0") == 0 || strcmp(reg, "0") == 0 || strcmp(reg, "0000") == 0) {
@@ -110,8 +115,7 @@ uint8_t parse_reg()
 		return 15;
 	} else
 	{
-		printf("Syntax error in line %d: invalid register: %s\n",
-			curr_line, reg);
+		SYNTAX_ERR("invalid register: %s\n", reg);
 		exit(-1);
 	}
 }
@@ -121,8 +125,7 @@ uint8_t parse_regpair()
 {
 	char *pair = strtok(NULL, " \t,");
 	if (!pair) {
-		printf("Syntax error in line %d: missing register pair\n",
-			curr_line);
+		SYNTAX_ERR("missing register pair\n");
 		exit(-1);
 	}
 	if (strcmp(pair, "P0") == 0 || strcmp(pair, "P000") == 0 || strcmp(pair, "0<") == 0) {
@@ -150,8 +153,7 @@ uint8_t parse_regpair()
 		return 0xE;
 	} else
 	{
-		printf("Syntax error in line %d: invalid register pair: %s\n",
-			curr_line, pair);
+		SYNTAX_ERR("invalid register pair: %s\n", pair);
 		exit(-1);
 	}	
 }
@@ -162,19 +164,16 @@ uint8_t parse_byte()
 	errno = 0;
 	char *imm = strtok(NULL, " \t,");
 	if (!imm) {
-		printf("Syntax error in line %d: missing immediate data.\n",
-			curr_line);
+		SYNTAX_ERR("missing immediate data.\n");
 		exit(-1);
 	}
 	long int i = strtol(imm, &end, 0);
 	if (*end != '\0') {
-		printf("Syntax error in line %d: invalid number format: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("invalid number format: %s\n", imm);
 		exit(-1);
 	}
 	if (i < -128 || i > 255) {
-		printf("Syntax error in line %d: value out of range: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("value out of range: %s\n", imm);
 		exit(-1);
 	}
 	return (uint8_t) (((int8_t) i) & 0xFF);
@@ -186,43 +185,37 @@ uint16_t parse_12bit()
 	errno = 0;
 	char *imm = strtok(NULL, " \t,");
 	if (!imm) {
-		printf("Syntax error in line %d: missing immediate data.\n",
-			curr_line);
+		SYNTAX_ERR("missing immediate data.\n");
 		exit(-1);
 	}
 	long int i = strtol(imm, &end, 0);
 	if (*end != '\0') {
-		printf("Syntax error in line %d: invalid number format: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("invalid number format: %s\n", imm);
 		exit(-1);
 	}
 	if (i < 0 || i > 4095) {
-		printf("Syntax error in line %d: value out of range: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("value out of range: %s\n", imm);
 		exit(-1);
 	}
 	return (uint16_t) (i & 0xFFF);
 }
-			
+
 uint8_t parse_nibble()
 {
 	char *end;
 	errno = 0;
 	char *imm = strtok(NULL, " \t,");
 	if (!imm) {
-		printf("Syntax error in line %d: missing immediate data.\n",
-			curr_line);
+		SYNTAX_ERR("missing immediate data.\n");
 		exit(-1);
 	}
 	long int i = strtol(imm, &end, 0);
 	if (*end != '\0') {
-		printf("Syntax error in line %d: invalid number format: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("invalid number format: %s\n", imm);
 		exit(-1);
 	}
 	if (i < 0 || i > 15) {
-		printf("Syntax error in line %d: value out of range: %s\n",
-			curr_line, imm);
+		SYNTAX_ERR("value out of range: %s\n", imm);
 		exit(-1);
 	}
 	return (uint8_t) (i & 0x0F);
@@ -232,8 +225,7 @@ void parse_target_addr8()
 {
 	char *goal = strtok(NULL, " \t,");
 	if (!goal) {
-		printf("Syntax error in line %d: missing jump goal\n",
-			curr_line);
+		SYNTAX_ERR("missing jump goal\n");
 		exit(-1);
 	}
 	label_ref[curr_refs] = strdup(goal);
@@ -246,8 +238,7 @@ void parse_target_addr12()
 {
 	char *goal = strtok(NULL, " \t,");
 	if (!goal) {
-		printf("Syntax error in line %d: missing jump goal\n",
-			curr_line);
+		SYNTAX_ERR("missing jump goal\n");
 		exit(-1);
 	}
 	label_ref[curr_refs] = strdup(goal);
@@ -255,13 +246,12 @@ void parse_target_addr12()
 	curr_refs++;
 	prog_mem[curr_ip++] = 0x00;
 }
-			
+
 uint8_t parse_cond()
 {
 	char *cond = strtok(NULL, " \t,");
 	if (!cond) {
-		printf("Syntax error in line %d: missing condition\n",
-			curr_line);
+		SYNTAX_ERR("missing condition\n");
 		exit(-1);
 	}
 	if (strcmp(cond, "NC") == 0) {
@@ -287,8 +277,7 @@ uint8_t parse_cond()
 	} else {
 		int c = atoi(cond);
 		if (c < 1 || c > 15) {
-			printf("Syntax error in line %d: invalid condition code: %d\n",
-			curr_line, c);
+			SYNTAX_ERR("invalid condition code: %d\n", c);
 			exit(-1);
 		}
 		return c;
@@ -511,14 +500,12 @@ void compile(char *line)
 			old_ip = curr_ip;
 		}
 		else {
-			printf("Syntax error: unknown opcode in line %d: %s\n",
-				curr_line, token);
+			SYNTAX_ERR("unknown opcode: %s\n", token);
 			exit(-1);
 		}
 
 		if (strtok(NULL, " ,")) {
-			printf("Syntax error: garbage at end of line %d\n",
-				curr_line);
+			SYNTAX_ERR("garbage at end of line\n");
 			exit(-1);
 		}
 	}
@@ -527,8 +514,8 @@ void compile(char *line)
 int main(int argc, char **argv)
 {
 	fprintf(stdout, "MCS-4 Assembler for i4004\n");
-	fprintf(stdout, "Written 2013,2018 by Andreas J. Reichel\n");
-
+	fprintf(stdout, "(c)2013,2018 by Andreas J. Reichel\n");
+	fprintf(stdout, "Version "VERSION"\n\n");
 	if (argc < 2) {
 		fprintf(stdout, "Syntax: as4 file.s\n");
 		return 0;
