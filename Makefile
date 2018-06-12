@@ -13,12 +13,16 @@ CFLAGS = -fno-stack-protector \
 	-s \
 	-Os
 
-all: as4 as40
+all: as4 as40 as8
 
 as4: as4.c
 	$(CC) $(CFLAGS) $< -o $@
 	$(STRIP) $(STRIPFLAGS) $@
 
 as40: as40.c
+	$(CC) $(CFLAGS) $< -o $@
+	$(STRIP) $(STRIPFLAGS) $@
+
+as8: as8.c
 	$(CC) $(CFLAGS) $< -o $@
 	$(STRIP) $(STRIPFLAGS) $@
