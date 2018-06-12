@@ -613,7 +613,7 @@ int main(int argc, char **argv)
 		strcat(bin_file, ".bin");
 	}
 
-	fprintf(stdout, "Binary output: %s\n", bin_file);
+	fprintf(stdout, "Binary output : %s\n", bin_file);
 	f = fopen(bin_file, "wb");
 	if (!f) {
 		fprintf(stderr, "Cannot open output file.\n");
@@ -632,7 +632,7 @@ int main(int argc, char **argv)
 	{
 		strcat(bin_file, ".lst");
 	}
-	fprintf(stdout, "Listing file: %s\n", bin_file);
+	fprintf(stdout, "Listing file  : %s\n", bin_file);
 	f = fopen(bin_file, "w");
 	if (!f) {
 		fprintf(stderr, "Cannot open output file.\n");
