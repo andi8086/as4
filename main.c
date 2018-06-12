@@ -610,7 +610,22 @@ int main(int argc, char **argv)
 	fprintf(stdout, "Assembled %d bytes\n", curr_ip);
 
 	fclose(f);
-	f = fopen("a4.bin", "wb");
+
+	char *bin_file = malloc(strlen(argv[1]) + 4);
+	sprintf(bin_file, "%s", argv[1]);
+	char *dot = bin_file + strlen(bin_file) - 1;
+	while(dot > bin_file) {
+		if (*(dot--) == '.') break;
+	}
+	if (dot != bin_file) {
+		sprintf(dot+1, ".bin");
+	} else
+	{
+		strcat(bin_file, ".bin");
+	}
+
+	fprintf(stdout, "Binary output: %s\n", bin_file);
+	f = fopen(bin_file, "wb");
 	if (!f) {
 		fprintf(stderr, "Cannot open output file.\n");
 		return 1;
@@ -622,12 +637,25 @@ int main(int argc, char **argv)
 
 	fclose(f);
 
+	if (dot != bin_file) {
+		sprintf(dot+1, ".lst");
+	} else
+	{
+		strcat(bin_file, ".lst");
+	}
+	fprintf(stdout, "Listing file: %s\n", bin_file);
+	f = fopen(bin_file, "w");
+	if (!f) {
+		fprintf(stderr, "Cannot open output file.\n");
+		return 1;
+	}
 	for (int i = 0; i < curr_ip; i++) {
 		if (listing[i]) {
-			fprintf(stdout, "%s\n", listing[i]);
+			fprintf(f, "%s\n", listing[i]);
 			free(listing[i]);
 		}
 
 	}
+	fclose(f);
 	return 0;
 }
