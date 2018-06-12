@@ -37,14 +37,14 @@ SOFTWARE.
 
 uint16_t curr_ip;
 uint16_t old_ip;
-uint8_t prog_mem[4096];	// maximum amount of ROM = 4K
+uint8_t prog_mem[4097];	// maximum amount of ROM = 4K
 
 uint16_t curr_label;
-uint16_t label_addr[4096];
-char* label_name[4096];
+uint16_t label_addr[4097];
+char* label_name[4097];
 
-char* label_ref[4096];
-uint16_t label_ref_loc[4096];
+char* label_ref[4097];
+uint16_t label_ref_loc[4097];
 uint16_t curr_refs;
 
 uint16_t curr_line;
@@ -53,12 +53,11 @@ char *listing[4096];
 
 void add_label(char *label)
 {
-	
 	label_name[curr_label] = label;
 	label_addr[curr_label] = curr_ip;
 	curr_label++;
 }
-			
+
 uint8_t parse_reg()
 {
 	char *reg = strtok(NULL, " \t,");
@@ -155,7 +154,7 @@ uint8_t parse_regpair()
 	{
 		SYNTAX_ERR("invalid register pair: %s\n", pair);
 		exit(-1);
-	}	
+	}
 }
 
 uint8_t parse_byte()
@@ -292,7 +291,7 @@ void compile(char *line)
 		*comment = 0;
 	}
 	if (comment == line) return;
-	
+
 	char *label = strstr(line, ":");
 	if (label) {
 		char *slabel = strndup(line, label-line);
@@ -303,7 +302,7 @@ void compile(char *line)
 	while (*line == ' ') line++;
 	// trim leading tabs
 	while (*line == '\t') line++;
-	
+
 	if (!*line) return;
 	// trim trailing spaces
 	while (line[strlen(line)-1] == ' ') line[strlen(line)-1] = 0;
@@ -354,7 +353,7 @@ void compile(char *line)
 		} else
 		if (strcmp(token, "SRC") == 0) {
 			uint8_t c = parse_regpair();
-			prog_mem[curr_ip++] = 0x21 | c;	
+			prog_mem[curr_ip++] = 0x21 | c;
 		} else
 		if (strcmp(token, "FIN") == 0) {
 			uint8_t c = parse_regpair();
@@ -558,6 +557,9 @@ int main(int argc, char **argv)
 				sprintf(listing[old_ip]+12, "%s", old_line);
 			}
 			free(old_line);
+			if (curr_ip > 4095) {
+				goto oom;
+			}
 		}
 	}
 
@@ -569,7 +571,7 @@ int main(int argc, char **argv)
 	for (int i = 0; i < curr_refs; i++) {
 		uint16_t loc = label_ref_loc[i];
 		char* symbol = label_ref[i];
-		
+
 		bool ref_found = false;
 		for (int j = 0; j < curr_label; j++) {
 			if (strcmp(label_name[j], symbol) == 0) {
@@ -644,5 +646,14 @@ int main(int argc, char **argv)
 
 	}
 	fclose(f);
+
+	free(bin_file);
+
 	return 0;
+oom:
+	if (line) {
+		free(line);
+		fprintf(stderr, "Error: Program larger than 4K.\n");
+		exit(1);
+	}
 }
