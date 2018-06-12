@@ -4,7 +4,7 @@ CFLAGS = -fno-stack-protector \
 	-s \
 	-Os
 
-as4: main.c
+as4: as4.c
 	$(CC) $(CFLAGS) $< -o $@
 	strip -S \
 	-R .note.gnu.gold-version \
