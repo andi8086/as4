@@ -40,16 +40,16 @@
 ;----------------------------------------------------------------------------------------------------------------------------------
 
 
-junb_000: clb
-jcnb_001: jcn TZ $001		;wait for the inactive printer drum sector signal
+$000: clb
+$001: jcn TZ $001		;wait for the inactive printer drum sector signal
           jms $0b0		;Keyboard handling
-jcnb_005: jms $15f		;right shift of keyboard buffer through R13 
+$005: jms $15f		;right shift of keyboard buffer through R13 
           ld 13
           xch 1		;R1=lower half of the possible scan code
           clb
           jms $15f		;right shift of keyboard buffer through R13
           ld 13		;ACC=upper half of the possible scan code
-jcnb_00d: jcn AN $029		;jump, if valid data was shifted from the buffer
+$00d: jcn AN $029		;jump, if valid data was shifted from the buffer
 
 ;Status light handling
 ;RAM1 port:
@@ -59,7 +59,7 @@ jcnb_00d: jcn AN $029		;jump, if valid data was shifted from the buffer
 
           inc 8		;R4R5 points to WR
           jms $173		;read the overflow bit, CY=SR.S2.bit0
-jcnf_012: src 3<
+$012: src 3<
           rd0			;read WR.S0 (minus/positive sign, bit 0 is used)
           ral
           xch 3		;R3=WR.S0 << 1 + (overflow bit)
@@ -74,7 +74,7 @@ jcnf_012: src 3<
           src 3<
           rdr			;read ROM2 port
           ral
-jcnb_022: tcc
+$022: tcc
           jcn AZ $000		;jump back, if ROM2.bit3 is low: paper advance button is not held down
           jms $246		;more advancing the printer paper
           jun $000		;jump back to main loop
@@ -83,7 +83,7 @@ jcnb_022: tcc
 ;A pressed button is found
 ;
 
-          xch 0		;R0R1=Keyboard scan code
+$029:     xch 0		;R0R1=Keyboard scan code
           rd0			;decrement the keyboard buffer pointer (KR.S0) by two
           dac
           dac
@@ -145,22 +145,24 @@ jcnb_022: tcc
 ;copied into the instruction pointer, otherwise it is skipped by increasing the instruction pointer again.
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-jcnb_04b: jcn TZ $04f		;wait for the inactive printer drum sector signal
-iszb_04d: jms $0b0		;keyboard handling
-jcnf_04f: fim 3< $20
+$04b: jcn TZ $04f		;wait for the inactive printer drum sector signal
+$04d: jms $0b0		;keyboard handling
+$04f: fim 3< $20
           fim 4< $10
           jms $300		;fetch the pseudo instruction code into R2R3
           jms $100		;execute the associated routine
-jcnb_047: isz 1 $05a		;inc R0R1, pseudo code instruction pointer
+$057: isz 1 $05a		;inc R0R1, pseudo code instruction pointer
           inc 0
-iszf_05a: jcn AZ $04b		;jump back, if ACC returned by the pseudo instruction was 0
+
+
+$05a: jcn AZ $04b		;jump back, if ACC returned by the pseudo instruction was 0
           tcc
           jcn AZ $057		;if CY returned by the pseudo instruction was 0, R0R1 is incremented again
 				;(the jump address is skipped)
           jun $302		;if CY was set to 1, implement it as a pseudo code jump instruction...
 
 
-jcnb_061: ldm 4		;piece of code, executed when no row is active in the actual column of keyboard matrix
+$061: ldm 4		;piece of code, executed when no row is active in the actual column of keyboard matrix
           jun $0d4		;4 is the number of buttons in one column
 
 ;	i4003 shift register handling
@@ -169,11 +171,11 @@ jcnb_061: ldm 4		;piece of code, executed when no row is active in the actual co
 ;	bit1=shifter data
 ;	bit2=printer hammer shifter clock
 
-subr_064: ldm 3		;shift high bit into keyboard shifter (Clock=1, Data=1)
-subr_065: src 4<		;R8R9 selects ROM0
+$064: ldm 3		;shift high bit into keyboard shifter (Clock=1, Data=1)
+$065: src 4<		;R8R9 selects ROM0
           wrr			;assert shifter
           ldm 0		;Clock=0, Data=0
-jcnb_068: wrr			;assert shifter
+$068: wrr			;assert shifter
           bbl 0
 
 ;
@@ -181,25 +183,25 @@ jcnb_068: wrr			;assert shifter
 ;printer sector counter. Wait for a short time, and check the state of the index signal. If it is active, clear R12.
 ;
 
-subr_06a: inc 12		;R12, the printer drum sector counter is incremented
+$06a: inc 12		;R12, the printer drum sector counter is incremented
           fim 1< $20
-iszb_06d: src 1<
+$06d: src 1<
           rdr			;read ROM2 input port
           rar			;index signal is rotated into CY
           isz 3 $06d		;jump back 15 times (short wait)
           jcn C0 $076		;jump, if index signal is inactive
           clb
           xch 12		;clear R12, the printer drum sector counter
-jcnf_076: bbl 0
+$076: bbl 0
 
 ;
 ;piece of code for the keyboard matrix handling, buffer clearing, when two buttons are pressed at the same time
 ;
 
-jcnb_077: ld 9		;check the status of the current row
+$077: ld 9		;check the status of the current row
           jcn AZ $0d9		;go back to the next row, if no button is pressed in this column
 					;continue, if two buttons are simultaneously pressed in different columns
-jxnb_07a: fim 4< $00		;clear the keyboard buffer
+$07a: fim 4< $00		;clear the keyboard buffer
           clb
           jms $14a		;initialize the keyboard buffer (clear KR.M0-F, KR.S0-1)
           jun $0f7		;jump to exit from keyboard handling
@@ -277,16 +279,16 @@ jxnb_07a: fim 4< $00		;clear the keyboard buffer
 ;lback2: jcn TN lback2 loop, when the sector signal becomes active.
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-subr_0b0: jms $06a		;R12 synchronization with the printer drum sectors
-          fim 4< $07
-iszb_0b4: jms $064		;shift one high bit into keyboard shifter
+$0b0: jms $06a		;R12 synchronization with the printer drum sectors
+$0b2:     fim 4< $07
+$0b4: jms $064		;shift one high bit into keyboard shifter
           isz 9 $0b4		;loop back, (gives 9 pulses, deactivates the entire keyboard shifter except last column)
           fim 3< $18		;R6=1 for selecting ROM1, R7=loop counter (16-8=8 columns are checked)
           fim 1< $00		;Clear R2 and R3, scan code counter
           ldm 1
           jms $065		;shift one low bit into keyboard shifter (select the first column, other columns are high)
 
-iszb_0bf: src 3<
+$0bf: src 3<
           rdr			;Read ROM1 port, rows of the selected keyboard column
           kbp			;Decode the lines (0->0, 1->1, 2->2, 4->3, 8->4, rest->15)
           xch 9		;place the code into R9
@@ -298,18 +300,18 @@ iszb_0bf: src 3<
           isz 9 $0cd		;inc R9, and jump, if maximum one column is active
           jun $07a		;jump to clear the buffer and exit from the keyboard processing
 					;(two buttons are pressed in the same column)
-iszf_0cd: jcn AZ $061		;jump, if none of the lines are active (ACC=4, and continue at $0d4)
+$0cd: jcn AZ $061		;jump, if none of the lines are active (ACC=4, and continue at $0d4)
           xch 2
           ral
           stc
           rar
           xch 2		;R2.bit3 is set to high (indicating, that a button is pressed)
-junf_0d4: add 3		;ACC=1..4, if line is decoded, or 4, if no line is active
+$0d4: add 3		;ACC=1..4, if line is decoded, or 4, if no line is active
           xch 3		;adding ACC to scan code counter, R3=lower half
           ldm 0
           add 2		;adding carry to the upper half
           xch 2
-jcnf_0d9: jms $064		;shift one high bit into keyboard shifter (select the next column in the matrix)
+$0d9: jms $064		;shift one high bit into keyboard shifter (select the next column in the matrix)
           isz 7 $0bf		;loop back, check the next columns of the matrix
 
           src 4<		;select the keyboard buffer
@@ -335,14 +337,14 @@ jcnf_0d9: jms $064		;shift one high bit into keyboard shifter (select the next c
           inc 9
           ld 9
           wr0			;KR.S0=R9 -> store the incremented buffer pointer
-jxnf_0f7: ldm 15		;KR.S3=15 -> a button is held down
-jcnf_0f8: wr3			;write the keyboard pressing status
+$0f7: ldm 15		;KR.S3=15 -> a button is held down
+$0f8: wr3			;write the keyboard pressing status
           fim 4< $00		;exit from the keyboard check, initialize R6R7 -> WR, R8R9 -> KR
           fim 3< $10
-jcnb_0fd: jcn TN $0fd		;wait for the active printer drum sector signal
+$0fd: jcn TN $0fd		;wait for the active printer drum sector signal
           bbl 0
 
-subr_100: jin 1<		;jump to the pseudo instruction code associated routine
+$100: jin 1<		;jump to the pseudo instruction code associated routine
 
 ;
 ;	Store the working register into another register.
@@ -352,10 +354,10 @@ subr_100: jin 1<		;jump to the pseudo instruction code associated routine
 ;BPC_03:	MOV RR,WR
 ;BPC_04:	MOV DR,WR
 
-vmbc_101: ld 5		;target=IR (function code+4), load function code into ACC
-vmbc_102: iac			;target=CR
-vmbc_103: iac			;target=RR
-vmbc_104: add 6		;target=DR
+$101: ld 5		;target=IR (function code+4), load function code into ACC
+$102: iac			;target=CR
+$103: iac			;target=RR
+$104: add 6		;target=DR
           xch 8		;source and destination is exchanged
           xch 6
           jun $10e		;jump to copy numbers
@@ -370,14 +372,14 @@ vmbc_104: add 6		;target=DR
 ;BPC_0D:	MOV WR,RR
 ;BPC_0E:	MOV WR,DR
 
-vmbc_109: inc 6		;source=MR
-subr_10a: inc 6		;source=TR
-vmbc_10b: inc 6		;source=SR
-vmbc_10c: inc 6		;source=CR
-vmbc_10d: inc 6		;source=RR
-junf_10e: src 3<		;source=DR,  move number into another number, NR(R8)=NR(R6)
-vmbc_10f: rdm
-vmbc_110: src 4<
+$109: inc 6		;source=MR
+$10a: inc 6		;source=TR
+$10b: inc 6		;source=SR
+$10c: inc 6		;source=CR
+$10d: inc 6		;source=RR
+$10e: src 3<		;source=DR,  move number into another number, NR(R8)=NR(R6)
+$10f: rdm
+$110: src 4<
           wrm			;number is moved digit by digit
           inc 9
           isz 7 $10e		;loop for all digits
@@ -389,7 +391,7 @@ vmbc_110: src 4<
           src 4<
           wr1
           xch 3		;R3=place of plus/minus sign
-vmbc_11c: wr0
+$11c: wr0
           bbl 0
 
 ;
@@ -398,11 +400,11 @@ vmbc_11c: wr0
 ;BPC_1E:	ADD IR,WR
 ;BPC_21:	ADD DR,WR
 
-vmbc_11e: ldm 4		;target=IR	(function code + 4)
+$11e: ldm 4		;target=IR	(function code + 4)
           add 5
           xch 6
 
-iszb_121: src 4<		;NR(R6)=NR(R6)+NR(R8), two numbers are added digit by digit
+$121: src 4<		;NR(R6)=NR(R6)+NR(R8), two numbers are added digit by digit
           rdm
           src 3<
           adm			;adding and daa correcting one digit
@@ -420,30 +422,30 @@ iszb_121: src 4<		;NR(R6)=NR(R6)+NR(R8), two numbers are added digit by digit
 ;BPC_31:	SUB IR,WR, jump, if result is not negative (R13 is incremented at jump)
 ;BPC_34:	SUB DR,WR, jump, if result is not negative (R13 is incremented at jump)
 
-vmbc_12c: ldm 4
+$12c: ldm 4
           add 5
           xch 8		;source is set to function code + 4
           jun $133		;target is set to 1
 
-junf_131: ldm 4
+$131: ldm 4
           add 5
-junf_133: xch 6		;target is set to function code + 4
+$133: xch 6		;target is set to function code + 4
 
-vmbc_134: stc			;NR(R6)=NR(R6)-NR(R8), two numbers are subtracted digit by digit
-iszb_135: tcs			;ACC=9+CY (10 or 9), CY=0
-vmbc_136: src 4<
+$134: stc			;NR(R6)=NR(R6)-NR(R8), two numbers are subtracted digit by digit
+$135: tcs			;ACC=9+CY (10 or 9), CY=0
+$136: src 4<
           sbm			;ACC=10(9)-NR(R8).M(R9)
           clc
           src 3<
           adm			;ACC=NR(R6).M(R7)+(10(9)-NR(R8).M(R9))
           daa
-vmbc_13c: wrm			;NR(R6).M(R7)=daa adjusted result
+$13c: wrm			;NR(R6).M(R7)=daa adjusted result
           inc 9
           isz 7 $135		;loop for all digits
 
-vmbc_140: jcn C0 $143		;skip R13 incrementing, if last digit does not generate carry
+$140: jcn C0 $143		;skip R13 incrementing, if last digit does not generate carry
           inc 13
-jcnf_143: bbl 1		;prepare pseudo code jump
+$143: bbl 1		;prepare pseudo code jump
 
 ;
 ; clear a register including status character 0 and 1
@@ -456,14 +458,14 @@ jcnf_143: bbl 1		;prepare pseudo code jump
 ;BPC_49:	CLR DR	(DR=0)
 ;BPC_4A:	CLR WR	(WR=0)
 
-vmbc_144: inc 8		;target=MR
+$144: inc 8		;target=MR
           inc 8		;target=TR
-subr_146: inc 8		;target=SR
-vmbc_147: inc 8		;target=CR
-vmbc_148: inc 8		;target=RR
-subr_149: inc 8		;target=DR
+$146: inc 8		;target=SR
+$147: inc 8		;target=CR
+$148: inc 8		;target=RR
+$149: inc 8		;target=DR
 
-subr_14a: src 4<		;NR(R8).M(R9)=ACC (=0)
+$14a: src 4<		;NR(R8).M(R9)=ACC (=0)
           wrm			;clearing the number digit by digit
           isz 9 $14a		;loop for all digits
           wr0			;clear sign
@@ -477,14 +479,14 @@ subr_14a: src 4<		;NR(R8).M(R9)=ACC (=0)
 ;BPC_52:	SHL DR	one digit left shift of DR with R13
 ;BPC_53:	SHL WR	one digit left shift of WR with R13
 
-vmbc_151: inc 8		;target=RR
-vmbc_152: inc 8		;target=DR
+$151: inc 8		;target=RR
+$152: inc 8		;target=DR
 
-iszb_153: src 4<
+$153: src 4<
           rdm			;load current digit into ACC
           xch 13		;previous and current digit is exchanged between ACC and R13
           wrm			;save the previous digit
-          isz 9 $153		loop for next digits
+          isz 9 $153		;loop for next digits
           bbl 0
 
 
@@ -497,15 +499,15 @@ iszb_153: src 4<
 ;BPC_5E:	SHR DR	one digit right shift of DR with R13 (0 is shifted from right)
 ;BPC_5F:	SHR WR	one digit right shift of WR with R13 (0 is shifted from right)
 
-vmbc_15a: ldm 14		;only 14 digits are shifted
+$15a: ldm 14		;only 14 digits are shifted
           xch 9
           ld 13
-vmbc_15d: inc 8		;target=RR
-vmbc_15e: inc 8		;target=DR
+$15d: inc 8		;target=RR
+$15e: inc 8		;target=DR
 
-subr_15f: xch 13		;one digit right shift of NR(R8).M(R9) with R13
+$15f: xch 13		;one digit right shift of NR(R8).M(R9) with R13
           ld 9
-jcnb_161: dac			;decrement R9, loop counter
+$161: dac			;decrement R9, loop counter
           clc
           xch 9
           src 4<
@@ -523,9 +525,9 @@ jcnb_161: dac			;decrement R9, loop counter
 ;BPC_6D:	JPC MOPN	jump, if DR.S2=0
 ;BPC_6E:	JPC NTRUNC	jump, if WR.S2=0
 
-vmbc_16c: inc 8		;source=RR
-vmbc_16d: inc 8		;source=DR
-vmbc_16e: src 4<		;source=WR
+$16c: inc 8		;source=RR
+$16d: inc 8		;source=DR
+$16e: src 4<		;source=WR
           rd2			;read status character 2
           dac			;decrement, only 0->15 leaves CY=0
           cmc			;complement carry, the pseudo jump condition
@@ -540,11 +542,11 @@ vmbc_16e: src 4<		;source=WR
 ;BPC_76:	JPC MOPMUL	jump, if DR.S2.bit0>0
 ;BPC_77:	JPC ROUND	jump, if WR.S2.bit0>0
 
-subr_173: inc 8		;source=SR
-vmbc_174: inc 8		;source=CR
-vmbc_175: inc 8		;source=RR
-vmbc_176: inc 8		;source=DR
-vmbc_177: src 4<
+$173: inc 8		;source=SR
+$174: inc 8		;source=CR
+$175: inc 8		;source=RR
+$176: inc 8		;source=DR
+$177: src 4<
           rd2			;read status character 2
           rar			;rotate bit 0 into carry, the pseudo jump condition
           bbl 1		;prepare pseudo code jump
@@ -554,8 +556,8 @@ vmbc_177: src 4<
 ;
 ;BPC_7B:	JPC MOPCONST	jump, if DR.S2.bit3>0
 
-vmbc_17b  src 3<
-vmbc_17c: rd2			;read status character 2
+$17b: src 3<
+$17c: rd2			;read status character 2
           ral			;rotate bit 3 into CY, the pseudo jump condition
           bbl 1		;prepare pseudo code jump
 
@@ -565,10 +567,10 @@ vmbc_17c: rd2			;read status character 2
 ;BPC_7F:	CLR OVFL	clear SR.S2
 ;BPC_82:	CLR MOP		clear DR.S2
 
-vmbc_17f: inc 6		;target=SR
-subr_180: inc 6		;target=CR
-junb_181: inc 6		;target=RR
-junb_182: src 3<		;target=DR
+$17f: inc 6		;target=SR
+$180: inc 6		;target=CR
+$181: inc 6		;target=RR
+$182: src 3<		;target=DR
           wr2			;write status character 2 of target (in fact it is cleared as ACC=0)
           bbl 0
 
@@ -582,18 +584,18 @@ junb_182: src 3<		;target=DR
 ;BPC_8D:	SET MOPPAR	DR.S2=function parameter, set the multiplication/division from function parameter
 ;BPC_90:	SET MOPCONST	DR.S2.bit3=1, set that multiply/divide operation is with constant value
 
-vmbc_185: inc 6		;target=SR
-vmbc_186  inc 6		;target=CR
-vmbc_187: ldm 1		;target=RR
+$185: inc 6		;target=SR
+$186: inc 6		;target=CR
+$187: ldm 1		;target=RR
           jun $181		;set NR(R6+1).S2=1
 
-vmbc_18a: ldm 8
+$18a: ldm 8
           jun $181		;set NR(R6+1).S2=8
 
-vmbc_18d: ld 4		;ACC = parameter
+$18d: ld 4		;ACC = parameter
           jun $182		;set NR(R6).S2=parameter
 
-vmbc_190: src 3<
+$190: src 3<
           rd2			;set high bit of NR(R6).S2 to 1
           ral
           stc
@@ -610,62 +612,62 @@ vmbc_190: src 3<
 ;BPC_A0:	CLR DIGIT + JPC ZERO_DR		clear R13 and jump, if DR does not contain any value
 ;BPC_A2:	JPC ZERO_WR	jump, if WR does not contain any value
 
-vmbc_197: ldm 4
+$197: ldm 4
           add 5		;ACC=function code or function code + 4
           xch 8		;R8 points to IR
 
-vmbc_19a: ldm 14
+$19a: ldm 14
           xch 9		;R9=14
           jun $1a2
 
-vmbc_19e: ldm 14
+$19e: ldm 14
           xch 9		;R9=14 and ACC=previous R9 (=0)
 
-subr_1a0: xch 13		;save ACC=0 into R13
+$1a0: xch 13		;save ACC=0 into R13
           inc 8
 
-subr_1a2: src 4<		;check whether the number contains any digit. Return jump with CY=1, if the number is empty
-vmbc_1a3: ldm 15
+$1a2: src 4<		;check whether the number contains any digit. Return jump with CY=1, if the number is empty
+$1a3: ldm 15
           adm			;number is added in binary mode to the maximum value digit by digit
           isz 9 $1a2		;loop for the rest of digits
 
 ;BPC_A7:	JMP	Unconditional jump
 
-vmbc_1a7: cmc			;negate the pseudo jump condition
+$1a7: cmc			;negate the pseudo jump condition
           bbl 1		;prepare pseudo code jump
 
 ;BPC_A9:	JPC BIG_DIGIT	Jump, if R13>9
 
-vmbc_1a9: ld 13		;load R13
-vmbc_1aa: daa			;set CY=1, the pseudo jump condition, if R13>9
-vmbc_1ab: bbl 1		;prepare pseudo code jump
+$1a9: ld 13		;load R13
+$1aa: daa			;set CY=1, the pseudo jump condition, if R13>9
+$1ab: bbl 1		;prepare pseudo code jump
 
 ;BPC_AC:	JPC ZERO_DIGIT + DEC DIGIT	decrement R13 and jump, if R13 was 0 before the decrement
 
-vmbc_1ac: ld 13
+$1ac: ld 13
           dac			;ACC=decremented R13, will be placed back to R13
 
 ;BPC_AE:	CLR DIGIT + JMP		clear R13 and jump
 
-vmbc_1ae: xch 13
+$1ae: xch 13
           cmc			;negate the pseudo jump condition
           bbl 1		;prepare pseudo code jump
 
 ;BPC_B1:	JPC NEWOP	jump, if function code < 8 (new add/sub/mul/div operation)
 
-vmbc_1b1: ldm 7
+$1b1: ldm 7
           sub 5		;R5=function code; set CY=1, the pseudo jump condition, if R5<8
           bbl 1		;prepare pseudo code jump
 
 ;BPC_B4:	JPC MEMOP	jump, if function parameter > 3 (new memory operation)
 
-vmbc_1b4: ldm 12
+$1b4: ldm 12
           add 4		;R4=function parameter; set CY=1, the pseudo jump condition, if R4>3
           bbl 1		;prepare pseudo code jump
 
 ;BPC_B7:	JPC ROTFC	rotate the function code one bit right, jump if the next bit is 0
 
-vmbc_1b7  ld 5		;rotate R5=function code with 1 bit right
+$1b7: ld 5		;rotate R5=function code with 1 bit right
           rar			;bit 0 is rotated to CY
           xch 5		;rotated value is saved back
           cmc			;complement CY, the pseudo jump condition
@@ -673,71 +675,71 @@ vmbc_1b7  ld 5		;rotate R5=function code with 1 bit right
 
 ;BPC_BC:	JPC ODDPAR	jump, if bit0 of parameter>0
 
-vmbc_1bc: ld 4		;load R4=parameter into ACC
-vmbc_1bd: rar			;rotate bit 0 into CY, the pseudo jump condition
+$1bc: ld 4		;load R4=parameter into ACC
+$1bd: rar			;rotate bit 0 into CY, the pseudo jump condition
           bbl 1		;prepare pseudo code jump
 
 ;BPC_BF:	SET DP_IR	set digit point place of indirect register (IR.S1=R11)
 
-vmbc_1bf: ldm 4
+$1bf: ldm 4
           add 5		;ACC=function code + 4
           xch 8		;set it to target register
 
 ;BPC_C2:	SET DP_WR	set digit point place of working register (WR.S1=R11)
 
-vmbc_1c2: src 4<
+$1c2: src 4<
           ld 11
           wr1			;write place of digit point
           bbl 0
 
 ;BPC_C6:	GET DP_WR	get digit point place of working register (R11=WR.S1)
 
-vmbc_1c6: src 4<
+$1c6: src 4<
           rd1			;read place of digit point
           xch 11
           bbl 0
 
 ;BPC_CA:	INC DPCNT	increment digit point counter (increment R10R11)
 
-vmbc_1ca: isz 11 $1cd		;increment lower part, jump, if not zero
+$1ca: isz 11 $1cd		;increment lower part, jump, if not zero
           inc 10		;increment upper part
-iszf_1cd: bbl 0
+$1cd: bbl 0
 
 ;BPC_CE:	JPC NBIG_DPCNT	jump, if R10R11<14
 ;BPC_CF:	JPC ZERO_DPCNT	jump, if R10R11=0
 
-vmbc_1ce: ldm 13
-vmbc_1cf: sub 11		;subtract the lower part from 13
+$1ce: ldm 13
+$1cf: sub 11		;subtract the lower part from 13
           cmc
           ldm 0		;subtract the upper part from 0
           sub 10		;pseudo jump condition is set at no borrow
-vmbc_1d3: bbl 1		;prepare pseudo code jump
+$1d3: bbl 1		;prepare pseudo code jump
 
 ;Pseudo instruction code jump table. Normally pseudo instruction code execution can be directly started on address range $100-$1ff.
 ;This is a jump table to functions, which are implemented on other pages
 
-vmbc_1d4: jun $2d3		;BPC_D4: jump, if WR and IR have different sign
+$1d4: jun $2d3		;BPC_D4: jump, if WR and IR have different sign
           nop
-vmbc_1d7: jun $294		;BPC_D7: digit functions
-vmbc_1d9: jun $2a3		;BPC_D9: WR=TR, clear SR & TR; recall main total
-vmbc_1db: jun $2aa		;BPC_DB: Set function code=3, and jump
-vmbc_1dd: jun $2ae		;BPC_DD: decrement R10R11
-vmbc_1df: jun $2b3		;BPC_DF: WR.S1=WR.S3, R10R11=difference between required an actual digit point
-vmbc_1e1: jun $2b9		;BPC_E1: digit point counter adjust for division
-vmbc_1e3: jun $2ca		;BPC_E3: digit point counter adjust for multiplication
-vmbc_1e5: jun $2de		;BPC_E5: Sign of result register for multiplication or division + R13=15
-vmbc_1e7: jun $2e7		;BPC_E7: complement WR.S0 (change the sign of WR)
-vmbc_1e9: jun $2ec		;BPC_E9: rounding, if R13>4 then increment WR (and R14 too)
-vmbc_1eb: jun $246		;BPC_EB: end of printing with advancing the paper and R10R11=0, R14R15=0
-vmbc_1ed: jun $400		;BPC_ED: square root (optional)
+$1d7: jun $294		;BPC_D7: digit functions
+$1d9: jun $2a3		;BPC_D9: WR=TR, clear SR & TR; recall main total
+$1db: jun $2aa		;BPC_DB: Set function code=3, and jump
+$1dd: jun $2ae		;BPC_DD: decrement R10R11
+$1df: jun $2b3		;BPC_DF: WR.S1=WR.S3, R10R11=difference between required an actual digit point
+$1e1: jun $2b9		;BPC_E1: digit point counter adjust for division
+$1e3: jun $2ca		;BPC_E3: digit point counter adjust for multiplication
+$1e5: jun $2de		;BPC_E5: Sign of result register for multiplication or division + R13=15
+$1e7: jun $2e7		;BPC_E7: complement WR.S0 (change the sign of WR)
+$1e9: jun $2ec		;BPC_E9: rounding, if R13>4 then increment WR (and R14 too)
+$1eb: jun $246		;BPC_EB: end of printing with advancing the paper and R10R11=0, R14R15=0
+$1ed: jun $400		;BPC_ED: square root (optional)
 
 ;BPC_EF: CLR MENT + CLR OVFL + RET  clear CR.S2, SR.S2, TR.S2 and exit
 ;BPC_F1: CLR MODE + CLR MENT + RET	clear RR.S2, CR.S2 and exit
 ;BPC_F3: CLR MODE + RET		clear RR.S2 and exit
 
-vmbc_1ef: jms $180		; R6=R6+2, clear status character 2 of NR(R6)
-vmbc_1f1: jms $181		; R6=R6+1, clear status character 2 of NR(R6)
-vmbc_1f3: jms $181		; R6=R6+1, clear status character 2 of NR(R6)
+$1ef: jms $180		; R6=R6+2, clear status character 2 of NR(R6)
+$1f1: jms $181		; R6=R6+1, clear status character 2 of NR(R6)
+$1f3: jms $181		; R6=R6+1, clear status character 2 of NR(R6)
           fim 5< $00
           jun $000		;exit from the pseudo code interpreter
 
@@ -753,12 +755,12 @@ vmbc_1f3: jms $181		; R6=R6+1, clear status character 2 of NR(R6)
 ;BPC_FF:	PRN OVFL	print unimplemented number (dots with empty extra columns)
 
           inc 15		; (R15 will be 9)
-vmbc_1fa: inc 15		; (R15 will be 10)
-vmbc_1fb: inc 15		; (R15 will be 11)
-vmbc_1fc: inc 15		; (R15 will be 12)
-vmbc_1fd: inc 15		; (R15 will be 13)
-vmbc_1fe: inc 15		; (R15 will be 14)
-vmbc_1ff: xch 15		; (R15 will be 15)
+$1fa: inc 15		; (R15 will be 10)
+$1fb: inc 15		; (R15 will be 11)
+$1fc: inc 15		; (R15 will be 12)
+$1fd: inc 15		; (R15 will be 13)
+$1fe: inc 15		; (R15 will be 14)
+$1ff: xch 15		; (R15 will be 15)
           cma
           xch 15		; R15 is complemented
 
@@ -776,14 +778,14 @@ vmbc_1ff: xch 15		; (R15 will be 15)
           wrm			;WR.M15=0
           jun $22c		;jump to start the printing
 
-iszf_s10: isz 15 $217
+$210: isz 15 $217
 					;R15 was 14: number with function code and empty character in last column
           ldm 15
           xch 15		;R15=15 (empty column)
           ld 5		;function code
           jun $226		;jump to save ACC into R14
 
-iszf_217: ldm 1
+$217: ldm 1
           add 15
           tcc
           jcn AZ $225		;jump, if R15<13
@@ -799,15 +801,15 @@ iszf_217: ldm 1
           rar			;ACC=8*CY+7  (7=rounding up char, 15=empty char)
           jun $226		;jump to save ACC into R14
 
-jcnf_225: ld 4		;load parameter into R14
-junf_226: xch 14		;save ACC into R14, code of character in last column
+$225: ld 4		;load parameter into R14
+$226: xch 14		;save ACC into R14, code of character in last column
           src 4<
           rd1
           xch 10		;R10=place of digit point
           rd1
           xch 11		;R11=place of digit point
 
-jcnb_22c: jcn TZ $22c		;wait for the inactive printer drum sector signal
+$22c: jcn TZ $22c		;wait for the inactive printer drum sector signal
           ldm 2
           xch 13		;R13=2
           rd0			;read WR.S0 (sign)
@@ -818,7 +820,7 @@ jcnb_22c: jcn TZ $22c		;wait for the inactive printer drum sector signal
           inc 8		;R8R9 points to WR again (keyboard handling puts it to KR)
 					;R6R7 points to WR too
 
-jcnb_237: inc 11		;search for the place of the first digit before the digit point, result in R11
+$237: inc 11		;search for the place of the first digit before the digit point, result in R11
           ld 11
           xch 9		;R9=points to part, to be checked (started from place of digit point + 1)
           jms $1a2		;check, whether the remaining part of the number contains any digit
@@ -838,7 +840,7 @@ jcnb_237: inc 11		;search for the place of the first digit before the digit poin
 
 ;printing: R13 loop counter for the printer sectors
 
-junb_23f: jcn TZ $23f		;wait for the inactive printer drum sector signal
+$23f: jcn TZ $23f		;wait for the inactive printer drum sector signal
           clb
           wmp			;printer control signals are set to inactive
           wrr
@@ -846,47 +848,47 @@ junb_23f: jcn TZ $23f		;wait for the inactive printer drum sector signal
 
 ;BPC_EB:	PRN ADVANCE + CLR DPCNT		end of printing with advancing the paper and R10R11=0, R14R15=0
 
-subr_246: fim 5< $0c 		;R10R11=$0C
+$246: fim 5< $0c 		;R10R11=$0C
           fim 7< $00		;R14R15=$00
           ldm 8
-jcnb_24b: jcn TZ $24b		;wait for the inactive printer drum sector signal
+$24b: jcn TZ $24b		;wait for the inactive printer drum sector signal
           wmp			;Write RAM0 port, first 8, later 3 times 0 (advance the printer paper with a line)
           jms $0b0		;Keyboard handling
           isz 11 $24b		;loop back
           bbl 0
 
-iszf_253: jms $06a		;R12 synchronization with the printer drum sectors
+$253: jms $06a		;R12 synchronization with the printer drum sectors
           xch 8		;clear R8
 
 ;printing: R7 loop for the digits - filling the printer shifter for one sector
 
-          ldm 13		;(if R15=13, then the number is empty)
+$256:     ldm 13		;(if R15=13, then the number is empty)
           sub 15		;ACC=13-R15
           clc
           jcn AN $25f		;jump, if R15<>13
           xch 10		;R10=0 (if R15=13, empty columns are printed)
-          ldm 15		;(handling of empty columns)
+$25c:     ldm 15		;(handling of empty columns)
           jun $261
-jcnf_25f: src 3<		;(handling of valid digits)
+$25f: src 3<		;(handling of valid digits)
           rdm			;read one digit into ACC
-          isz 7 $277		;jump to next digit, if there is still
+$261:     isz 7 $277		;jump to next digit, if there is still
 
           ld 10		;pattern of extra two columns are fetched from R14 and R15
           jcn AN $268		;jump, if R10<>0 (digit point is already shifted)
           jms $28f		;shift one inactive column into printer shifter (CY=0)
-jcnf_268: ld 15
+$268: ld 15
           jms $28a		;if R15=R12, shift 1 into printer shifter else shift 0
           ld 14
           jms $28a		;if R14=R12, shift 1 into printer shifter else shift 0
 
-jcnb_26e: jcn TN $26e		;wait for the active printer drum sector signal
+$26e: jcn TN $26e		;wait for the active printer drum sector signal
           ldm 2
           src 4<
           wmp			;fire printer hammers
           jms $0b2		;Keyboard handling (R7 is cleared!)
           jun $23f		;loop back for the next sectors
 
-iszf_277: jms $28a		;if ACC=R12, shift 1 into printer shifter else shift 0
+$277: jms $28a		;if ACC=R12, shift 1 into printer shifter else shift 0
           ld 10
           jcn AZ $283		;jump, if R10=0 (there is no digit point)
           sub 7
@@ -896,24 +898,24 @@ iszf_277: jms $28a		;if ACC=R12, shift 1 into printer shifter else shift 0
           ldm 10		;shift the digit point into the shifter
           jms $28a		;if R12=10, shift 1 into printer shifter else shift 0
 
-jcnf_283: ld 7		;check, whether the loop counter exceeded the number of valid digits
+$283: ld 7		;check, whether the loop counter exceeded the number of valid digits
           sub 11
           tcc
           jcn AZ $256		;loop back for the next valid digits
           jun $25c		;loop back for the empty columns
 
-subr_28a: sub 12		;if ACC=R12, shift 1 into printer shifter else shift 0
+$28a: sub 12		;if ACC=R12, shift 1 into printer shifter else shift 0
           clc
           jcn AN $28f
           stc
-subr_28f: ldm 1		;shift CY into printer shifter
+$28f: ldm 1		;shift CY into printer shifter
           ral
           ral			;ACC=4+2*CY
           jun $065		;shift one low bit into printer shifter
 
 ;BPC_D7:	DIGIT	this function is called, when a digit, "00", "000", digit point or minus sign button is pressed
 
-junf_294: ld 4
+$294: ld 4
           xch 13		;R13=digit
           fim 3< $40
           src 3<
@@ -923,39 +925,39 @@ junf_294: ld 4
           wr2			;put 8 into the digit entry mode status
           clb
           jms $14a		;clear WR, WRS0, WRS1
-          jun $1c6		;R11=WR.S1, place of digit point
+$2a1:     jun $1c6		;R11=WR.S1, place of digit point
 
 ;BPC_D9:	MOV WR,TR + CLR TR + CLR SR	recall main total (WR=TR, clear SR & TR)
 
-junf_2a3: jms $10a		;WR=TR
+$2a3: jms $10a		;WR=TR
           jms $146		;clear SR (including S0 and S1)
           jms $149		;clear TR (including S0 and S1)
           bbl 0
 
 ;BPC_DB:	SET MRMFUNC + JMP	set function code=3 (memory function), and jump
 
-junf_2aa: ldm 3
+$2aa: ldm 3
           xch 5		;R5=function code is set to 3
           stc			;set CY=1, the pseudo jump condition
           bbl 1		;prepare pseudo code jump
 
 ;BPC_DD:	DEC DPCNT		decrement R10R11
 
-junf_2ae: ldm 1
+$2ae: ldm 1
           xch 3		;R3=1
           xch 11		;ACC=R11
           jun $2c2		;jump to R10R11 adjust
 
 ;BPC_DF:	GET DPDIFF	WR.S1=WR.S3, set R10R11 to the difference between required an actual digit point
 
-junf_2b3: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1), DR is not used
+$2b3: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1), DR is not used
           rd3			;read the required decimal places defined by the digit point switch
           wr1			;set it to WR.S1
           jun $2c2		;jump to R10R11 adjust
 
 ;BPC_E1:	GET DPCNTDIV	digit point counter adjust for division (set R10R11 to DR.S1+(13-R11)-WR.S1)
 
-junf_2b9: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
+$2b9: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
           ldm 13
           sub 11		;ACC=13-R11
           clc
@@ -968,7 +970,7 @@ junf_2b9: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
 ; 	input:	ACC=required place of digit point
 ; 		R3=place of digit point of the actual number
 
-junf_2c2: sub 3
+$2c2: sub 3
           xch 11		;R11=ACC-R3
           cmc
           xch 10
@@ -980,7 +982,7 @@ junf_2c2: sub 3
 ;BPC_E3:	GET DPCNTMUL	digit point counter adjust for multiplication
 ;				set R10R11 to the sum of digital places (WR, DR and current in R11)
 
-junf_2ca: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
+$2ca: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
           ld 3
           add 11
           add 2
@@ -991,10 +993,10 @@ junf_2ca: jms $2f9		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
 
 ;BPC_D4:	JPC DIFF_SIGN	jump, if WR and IR have different sign (either is minus, the other is plus)
 
-junf_2d3: ldm 4
+$2d3: ldm 4
           add 5
           xch 6		;R6=function code + 4
-          src 3<
+$2d6:     src 3<
           rd0			;read the sign of IR
           xch 2
           src 4<
@@ -1007,7 +1009,7 @@ junf_2d3: ldm 4
 ;	Sign of result register is set based on the WR and DR for multiplication or division
 ;	R13 is set to 15 for loop counting
 
-junf_2de: jms $2d6		;compare WR and DR sign
+$2de: jms $2d6		;compare WR and DR sign
           tcc
           inc 6		;R6 points to RR
           src 3<
@@ -1018,7 +1020,7 @@ junf_2de: jms $2d6		;compare WR and DR sign
 
 ;BPC_E7:	NEG WR	complement sign of working register (change the sign of WR)
 
-junf_2e7: src 4<
+$2e7: src 4<
           rd0			;read the sign
           cma			;complement it
           wr0			;write back the new sign
@@ -1026,12 +1028,12 @@ junf_2e7: src 4<
 
 ;BPC_E9:	ROUNDING	increment WR (and R14 too), if R13>4
 
-junf_2ec: ldm 11
+$2ec: ldm 11
           add 13		;R13 is added to 11
           jcn C0 $2f1		;if R13<5, CY=0, jump to add (??? jump to $2f8 would have been better)
           inc 14		;save also the fact of rounding into R14 
 
-jcnf_2f1: ldm 0		;Add CY to WR
+$2f1: ldm 0		;Add CY to WR
           src 4<
           adm
           daa			;add carry and decimal digit by digit
@@ -1039,7 +1041,7 @@ jcnf_2f1: ldm 0		;Add CY to WR
           isz 9 $2f1		;loop for the next digits
           bbl 0
 
-subr_2f9: src 3<		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
+$2f9: src 3<		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
           rd1
           xch 2		;R2=DR.S1
           src 4<
@@ -1047,9 +1049,10 @@ subr_2f9: src 3<		;read the decimal places of WR and DR (R2=DR.S1, R3=WR.S1)
           xch 3		;R3=WR.S1
           bbl 0
 
-subr_300: fin 1<		;fetch the pseudo instruction code into R2R3 and return
+$300: fin 1<		;fetch the pseudo instruction code into R2R3 and return
           bbl 0
-          fin 0<		;fetch the jump address, as the new value of pseudo code instruction pointer into R0R1
+
+$302:     fin 0<		;fetch the jump address, as the new value of pseudo code instruction pointer into R0R1
           jun $04b		;jump to the WM code interpreter
         
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -1089,40 +1092,54 @@ md_prn2:   = $fc    ;PRN FPAR
 ;14 times. Place of digit point of the result is calculated separately. Finally the result from RR is copied to WR.
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-31b            8d    ;SET MOPPAR				;divide is marked into MOP
-31c div_chk0:  a2 3c ;JPC ZERO_WR,num_overf			;divide by zero would result overflow
-31e            48    ;CLR RR
-31f            a0 73 ;CLR DIGIT + JPC ZERO_DR,num_res		;if dividend is zero, the result will be zero too
-321            e1    ;GET DPCNTDIV				;digit point initialization for divide
-322 div_chkDR: 9e 32 ;CLR DIGIT + JPC NBIG_DR,div_lshDR		;rotate DR into leftmost position
-324 div_chkWR: 9a 36 ;JPC NBIG_WR,div_lshWR			;rotate WR into leftmost position
-326            e5    ;SET DIVMUL_SIGN + MOV DIGIT,15		;sign of result is set
-327            51    ;SHL RR					;15 is shifted into the cleared RR, as a mark for loop end
-328            51    ;SHL RR
-329 div_loop:  34 29 ;SUB DR,WR + JPC NNEG,div_loop + INC DIGIT	;find, how many times the subtraction can be done
-32b            21    ;ADD DR,WR					;adding back the last unneeded subtract
-32c            51    ;SHL RR					;next digit of result is shifted into RR
-32d            a9 3f ;JPC BIG_DIGIT,div_finsh			;if shifted out number>9, end of division
-32f            52    ;SHL DR					;next digit (shifted out from RR) is shifted into DR
-330            a7 29 ;JMP div_loop
-332 div_lshDR: 52    ;SHL DR					;one digit rotate left of DR
-333            ca    ;INC DPCNT
-334            a7 22 ;JMP div_chkDR
-336 div_lshWR: 53    ;SHL WR					;one digit rotate left of WR
-337            cf 3c ;JPC ZERO_DPCNT,num_overf			;jump if rotate would cause overflow
-339            dd    ;DEC DPCNT
-33a            a7 24 ;JMP div_chkWR
+= $8d    ;SET MOPPAR				;divide is marked into MOP
+div_chk0:  = $a2 
+	   = $3c ;JPC ZERO_WR,num_overf			;divide by zero would result overflow
+= $48    ;CLR RR
+= $a0 
+= $73 ;CLR DIGIT + JPC ZERO_DR,num_res		;if dividend is zero, the result will be zero too
+= $e1    ;GET DPCNTDIV				;digit point initialization for divide
+div_chkDR: 
+= $9e 
+= $32 ;CLR DIGIT + JPC NBIG_DR,div_lshDR		;rotate DR into leftmost position
+div_chkWR: 
+= $9a 
+= $36 ;JPC NBIG_WR,div_lshWR			;rotate WR into leftmost position
+= $e5    ;SET DIVMUL_SIGN + MOV DIGIT,15		;sign of result is set
+= $51    ;SHL RR					;15 is shifted into the cleared RR, as a mark for loop end
+= $51    ;SHL RR
+div_loop:  = $34 
+= $29 ;SUB DR,WR + JPC NNEG,div_loop + INC DIGIT	;find, how many times the subtraction can be done
+= $21    ;ADD DR,WR					;adding back the last unneeded subtract
+= $51    ;SHL RR					;next digit of result is shifted into RR
+= $a9 
+= $3f ;JPC BIG_DIGIT,div_finsh			;if shifted out number>9, end of division
+= $52    ;SHL DR					;next digit (shifted out from RR) is shifted into DR
+= $a7
+= $29 ;JMP div_loop
+div_lshDR: = $52    ;SHL DR					;one digit rotate left of DR
+= $ca    ;INC DPCNT
+= $a7 
+= $22 ;JMP div_chkDR
+div_lshWR: = $53    ;SHL WR					;one digit rotate left of WR
+= $cf 
+= $3c ;JPC ZERO_DPCNT,num_overf			;jump if rotate would cause overflow
+= $dd    ;DEC DPCNT
+= $a7 
+= $24 ;JMP div_chkWR
 
-33c num_overf: ff    ;PRN OVFL					;print overflow
-33d            85    ;SET OVFL					;set overflow flag
-33e            f1    ;CLR MODE + CLR MENT + RET			;exit
+num_overf: = $ff    ;PRN OVFL					;print overflow
+= $85    ;SET OVFL					;set overflow flag
+= $f1    ;CLR MODE + CLR MENT + RET			;exit
 
-33f div_finsh: 5d    ;SHR RR					;rotate the number right
+div_finsh: = $5d    ;SHR RR					;rotate the number right
 
-340 num_dpadj: ce 73 ;JPC NBIG_DPCNT,num_res			;jump, if the result contains acceptable number of digits
-342            dd    ;DEC DPCNT					;otherwise shift the number to right
-343            5d    ;SHR RR					;Note: the place of this instruction could have been saved,
-344            a7 40 ;JMP num_dpadj				;  if the jump would go back to div_finsh
+num_dpadj: = $ce
+= $73 ;JPC NBIG_DPCNT,num_res			;jump, if the result contains acceptable number of digits
+= $dd    ;DEC DPCNT					;otherwise shift the number to right
+= $5d    ;SHR RR					;Note: the place of this instruction could have been saved,
+= $a7 
+= $40 ;JMP num_dpadj				;  if the jump would go back to div_finsh
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ;multiplication: WR <- RR = DR * WR
@@ -1134,91 +1151,124 @@ md_prn2:   = $fc    ;PRN FPAR
 ;in R10 and R11. After rotate the result is finally copied to WR.
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-346 mul_start: 8d    ;SET MOPPAR				;multiplication is marked in MOP
-347 mul_st2:   03    ;MOV RR,WR
-348            e3    ;GET DPCNTMUL				;digit point initialization for multiply
-349            e5    ;SET DIVMUL_SIGN + MOV DIGIT,15		;sign of result is set
-34a            0e    ;MOV WR,DR
-34b            49    ;CLR DR
-34c            52    ;SHL DR					;shift R13=15 into DR, but it is immediately shifted into RR
-34d mul_loopn: 5e    ;SHR DR					;DR-RR is shifted right
-34e            5a    ;SSR RR
-34f            a9 56 ;JPC BIG_DIGIT,mul_shres			;jump if R13=15 was shifted out (exit from the loop)
-351 mul_loopd: ac 4d ;JPC ZERO_DIGIT,mul_loopn + DEC DIGIT	;multiply the number with one digit
-353            21    ;ADD DR,WR					;finally DR=DR+R13*WR
-354            a7 51 ;JMP mul_loopd
+mul_start: = $8d    ;SET MOPPAR				;multiplication is marked in MOP
+mul_st2:   = $03    ;MOV RR,WR
+= $e3    ;GET DPCNTMUL				;digit point initialization for multiply
+= $e5    ;SET DIVMUL_SIGN + MOV DIGIT,15		;sign of result is set
+= $0e    ;MOV WR,DR
+= $49    ;CLR DR
+= $52    ;SHL DR					;shift R13=15 into DR, but it is immediately shifted into RR
+mul_loopn: = $5e    ;SHR DR					;DR-RR is shifted right
+= $5a    ;SSR RR
+= $a9 
+= $56 ;JPC BIG_DIGIT,mul_shres			;jump if R13=15 was shifted out (exit from the loop)
+mul_loopd: = $ac 
+= $4d ;JPC ZERO_DIGIT,mul_loopn + DEC DIGIT	;multiply the number with one digit
+= $21    ;ADD DR,WR					;finally DR=DR+R13*WR
+= $a7 
+= $51 ;JMP mul_loopd
+mul_shres:
+= $a0 
+= $40 ;CLR DIGIT + JPC ZERO_DR,num_dpadj		;rotate nonzero digits from DR to RR
+= $cf 
+= $3c ;JPC ZERO_DPCNT,num_overf			;jump if overflow occurred
+= $5e    ;SHR DR					;DR-RR is shifted right
+= $5a    ;SSR RR
+= $dd    ;DEC DPCNT
+= $a7 
+= $56 ;JMP mul_shres
 
-356 mul_shres: a0 40 ;CLR DIGIT + JPC ZERO_DR,num_dpadj		;rotate nonzero digits from DR to RR
-358            cf 3c ;JPC ZERO_DPCNT,num_overf			;jump if overflow occurred
-35a            5e    ;SHR DR					;DR-RR is shifted right
-35b            5a    ;SSR RR
-35c            dd    ;DEC DPCNT
-35d            a7 56 ;JMP mul_shres
+dp_mark:   = $86    ;SET MENTDP				;digit point flag
+= $f3    ;CLR MODE + RET
 
-35f dp_mark:   86    ;SET MENTDP				;digit point flag
-360            f3    ;CLR MODE + RET
+fn_percnt: = $fe    ;PRN FCODE
+= $ca    ;INC DPCNT					;increment the digit point place counter by 2
+= $ca    ;INC DPCNT
+= $a7 
+= $67 ;JMP num_md
 
-361 fn_percnt: fe    ;PRN FCODE
-362            ca    ;INC DPCNT					;increment the digit point place counter by 2
-363            ca    ;INC DPCNT
-364            a7 67 ;JMP num_md
+num_prm:  = $fe    ;PRN FCODE
+num_md:   = $7b 
+= $6f ;JPC MOPCONST,num_mul2			;jump at const divide/multiply
+= $90    ;SET MOPCONST
+num_mul1:  = $76 
+= $47 ;JPC MOPMUL,mul_st2			;jump to multiply, if previous operation is multiply
+= $02    ;MOV CR,WR					;save the divisor for constant divide
+= $a7 
+= $1c ;JMP div_chk0				;jump to divide
+num_mul2:  = $04    ;MOV DR,WR					;save the number into DR
+= $0c    ;MOV WR,CR					;recall previous number from CR
+= $a7 
+= $6a ;JMP num_mul1				;jump to divide or multiply
 
-366 num_prm:   fe    ;PRN FCODE
-367 num_md:    7b 6f ;JPC MOPCONST,num_mul2			;jump at const divide/multiply
-369            90    ;SET MOPCONST
-36a num_mul1:  76 47 ;JPC MOPMUL,mul_st2			;jump to multiply, if previous operation is multiply
-36c            02    ;MOV CR,WR					;save the divisor for constant divide
-36d            a7 1c ;JMP div_chk0				;jump to divide
-36f num_mul2:  04    ;MOV DR,WR					;save the number into DR
-370            0c    ;MOV WR,CR					;recall previous number from CR
-371            a7 6a ;JMP num_mul1				;jump to divide or multiply
-
-373 num_res:   0d    ;MOV WR,RR					;copy the RR result to WR
-374            c2    ;SET DP_WR					;set the digit point position from R10R11
-375            b1 10 ;JPC NEWOP,md_exitc			;jump to exit at new mul and div operation
-377            b4 7b ;JPC MEMOP,num_adj				;jump to adjust at M=+/M=-
-379            6e 9e ;JPC NTRUNC,num_pra2			;jump to result print, if digit point should not be adjusted
-37b num_adj:   df    ;GET DPDIFF				;WR.S1=WR.S3, set R10R11 to the difference between required an actual digit point
+num_res:   = $0d    ;MOV WR,RR					;copy the RR result to WR
+= $c2    ;SET DP_WR					;set the digit point position from R10R11
+= $b1 
+= $10 ;JPC NEWOP,md_exitc			;jump to exit at new mul and div operation
+= $b4 
+= $7b ;JPC MEMOP,num_adj				;jump to adjust at M=+/M=-
+= $6e 
+= $9e ;JPC NTRUNC,num_pra2			;jump to result print, if digit point should not be adjusted
+num_adj:   
+= $df    ;GET DPDIFF				;WR.S1=WR.S3, set R10R11 to the difference between required an actual digit point
 								;Rotate the number into the required digit point place
-37c num_rotl:  cf 9a ;JPC ZERO_DPCNT,num_pra1			;jump, if number is at the right digit point place
-37e            ce 84 ;JPC NBIG_DPCNT,num_lrot
+num_rotl:  = $cf 
+= $9a ;JPC ZERO_DPCNT,num_pra1			;jump, if number is at the right digit point place
+= $ce 
+= $84 ;JPC NBIG_DPCNT,num_lrot
 
-380            ca    ;INC DPCNT					;Rotate right
-381            5f    ;SHR WR
-382            a7 7c ;JMP num_rotl
+= $ca    ;INC DPCNT					;Rotate right
+= $5f    ;SHR WR
+= $a7 
+= $7c ;JMP num_rotl
 
-384 num_lrot:  dd    ;DEC DPCNT					;Rotate left
-385            53    ;SHL WR
-386            9a 7c ;JPC NBIG_WR,num_rotl
-388            a7 3c ;JMP num_overf				;print overflow
+num_lrot:   = $dd    ;DEC DPCNT					;Rotate left
+= $53    ;SHL WR
+= $9a 
+= $7c ;JPC NBIG_WR,num_rotl
+= $a7 
+= $3c ;JMP num_overf				;print overflow
 
-38a fn_memeq:  6c 66 ;JPC MODENN,num_prm			;jump, if new number is entered
-38c            75 66 ;JPC MODEMD,num_prm			;jump, if there is started mul/div operation
-38e            d9    ;MOV WR,TR + CLR TR + CLR SR		;recall main total
-38f            a7 98 ;JMP fn_memadd				;jump to add functions
+fn_memeq:  = $6c 
+= $66 ;JPC MODENN,num_prm			;jump, if new number is entered
+= $75 
+= $66 ;JPC MODEMD,num_prm			;jump, if there is started mul/div operation
+= $d9    ;MOV WR,TR + CLR TR + CLR SR		;recall main total
+= $a7 
+= $98 ;JMP fn_memadd				;jump to add functions
                
 ;entry address at add or subtract button
-391 fn_addsub: 6c 98 ;JPC MODENN,fn_memadd			;jump, if new number is enterer
-393            75 97 ;JPC MODEMD,clr_md				;jump, if there is started mul/div operation
-395            a7 98 ;JMP fn_memadd				;jump to add functions
+fn_addsub: = $6c 
+= $98 ;JPC MODENN,fn_memadd			;jump, if new number is enterer
+= $75 
+= $97 ;JPC MODEMD,clr_md				;jump, if there is started mul/div operation
+= $a7 
+= $98 ;JMP fn_memadd				;jump to add functions
 
-397 clr_md:    82    ;CLR MOP					;ignore previous mul/div operation
+clr_md:    = $82    ;CLR MOP					;ignore previous mul/div operation
 
-398 fn_memadd: ae 7b ;CLR DIGIT + JMP num_adj			;jump to adjust the number to the required digits
+fn_memadd: = $ae 
+= $7b ;CLR DIGIT + JMP num_adj			;jump to adjust the number to the required digits
 
-39a num_pra1:  b1 aa ;JPC NEWOP,num_pra3			;jump at new add/sub operation
-39c            77 a3 ;JPC ROUND,num_round			;jump to rounding, if rounding switch is in that position
+num_pra1:  = $b1 
+= $aa ;JPC NEWOP,num_pra3			;jump at new add/sub operation
+= $77 
+= $a3 ;JPC ROUND,num_round			;jump to rounding, if rounding switch is in that position
 
-39e num_pra2:  fd    ;PRN ROUND,FPAR
-39f            eb    ;PRN ADVANCE + CLR DPCNT
-3a0            b4 a8 ;JPC MEMOP,mem_add				;jump to change the function code at M=+/M=-/M+/M-
-3a2            f1    ;CLR MODE + CLR MENT + RET
+num_pra2:  = $fd    ;PRN ROUND,FPAR
+= $eb    ;PRN ADVANCE + CLR DPCNT
+= $b4 
+= $a8 ;JPC MEMOP,mem_add				;jump to change the function code at M=+/M=-/M+/M-
+= $f1    ;CLR MODE + CLR MENT + RET
 
-3a3 num_round: e9    ;ROUNDING					;do the rounding based on the last shifted out digit in R13
-3a4            9a 9e ;JPC NBIG_WR,num_pra2			;may generate overflow too
-3a6            a7 3c ;JMP num_overf				;print overflow
+num_round: = $e9    ;ROUNDING					;do the rounding based on the last shifted out digit in R13
+= $9a 
+= $9e ;JPC NBIG_WR,num_pra2			;may generate overflow too
+= $a7 
+= $3c ;JMP num_overf				;print overflow
 
-3a8 mem_add:   db ab ;SET MEMFUNC + JMP do_prpadd		;Set M+/M- function code
+mem_add:   = $db 
+= $ab ;SET MEMFUNC + JMP do_prpadd		;Set M+/M- function code
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ;add/subtract functions:
@@ -1234,60 +1284,70 @@ md_prn2:   = $fc    ;PRN FPAR
 ;M- (M=-)	3		6		RR=WR		MR=MR-WR
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-3aa num_pra3:  fc    ;PRN FPAR
-3ab do_prpadd: c6    ;GET DP_WR
+num_pra3:   = $fc    ;PRN FPAR
+do_prpadd: = $c6    ;GET DP_WR
 
-3ac do_addsub: 03    ;MOV RR,WR
+do_addsub: = $03    ;MOV RR,WR
 
-3ad            bc b0 ;JPC ODDPAR,skp_neg			;skip negate the number at add
-3af            e7    ;NEG WR					;negate the number at sub (convert it to add)
-3b0 skp_neg:   d4 b7 ;JPC DIFF_SIGN,do_sub			;jump, when adding a negative and a positive number
+= $bc 
+= $b0 ;JPC ODDPAR,skp_neg			;skip negate the number at add
+= $e7    ;NEG WR					;negate the number at sub (convert it to add)
+skp_neg:   = $d4 
+= $b7 ;JPC DIFF_SIGN,do_sub			;jump, when adding a negative and a positive number
 
-3b2            1e    ;ADD IR,WR					;ADD - may generate overflow
-3b3            97 bd ;JPC NBIG_IR,do_next
+= $1e    ;ADD IR,WR					;ADD - may generate overflow
+= $97 
+= $bd ;JPC NBIG_IR,do_next
 								;jump, if there is no overflow
-3b5            31 3c ;SUB IR,WR + JPC NNEG,num_overf + INC DIGIT	;correct back IR at overflow and jump always
+= $31 
+= $3c ;SUB IR,WR + JPC NNEG,num_overf + INC DIGIT	;correct back IR at overflow and jump always
 
-3b7 do_sub:    31 bd ;SUB IR,WR + JPC NNEG,do_next + INC DIGIT	;SUB - never generates overflow
-3b9            1e    ;ADD IR,WR
-3ba            2c bc ;SUB WR,IR + JPC NNEG,do_cont		;always goes to the next instruction
-3bc do_cont:   01    ;MOV IR,WR
+do_sub:    = $31 
+= $bd ;SUB IR,WR + JPC NNEG,do_next + INC DIGIT	;SUB - never generates overflow
+= $1e    ;ADD IR,WR
+= $2c 
+= $bc ;SUB WR,IR + JPC NNEG,do_cont		;always goes to the next instruction
+do_cont:   = $01    ;MOV IR,WR
 
-3bd do_next:   0d    ;MOV WR,RR					;take the original number from RR
-3be            bf    ;SET DP_IR					;set the place of digit point
+do_next:   = $0d    ;MOV WR,RR					;take the original number from RR
+= $bf    ;SET DP_IR					;set the place of digit point
 
-3bf            b4 ff ;JPC MEMOP,do_exit				;exit at memory function
-3c1            b7 ac ;JPC ROTFC,do_addsub			;do the addsub for the next number, if there is instruction for it
-3c3            8a    ;SET MODEAS				;mark, that last operation was add or sub
-3c4            ef    ;CLR MENT + CLR OVFL + RET			;exit
+= $b4 
+= $ff ;JPC MEMOP,do_exit				;exit at memory function
+= $b7 
+= $ac ;JPC ROTFC,do_addsub			;do the addsub for the next number, if there is instruction for it
+= $8a    ;SET MODEAS				;mark, that last operation was add or sub
+= $ef    ;CLR MENT + CLR OVFL + RET			;exit
 
 ;
 ;"C" Clear:	clear WR,DR,SR,TR and print. it does not clear RR,CR and RR.S2
 ;
-3c5 fn_clear:  82    ;CLR MOP
-3c6            49    ;CLR DR
-3c7            d9    ;MOV WR,TR + CLR TR + CLR SR
-3c8            4a    ;CLR WR
-3c9            fc    ;PRN FPAR
+fn_clear:  = $82    ;CLR MOP
+= $49    ;CLR DR
+= $d9    ;MOV WR,TR + CLR TR + CLR SR
+= $4a    ;CLR WR
+= $fc    ;PRN FPAR
 
 ;
 ;"CE" Clear:	clear WR, RR.S2, CR.S2
 ;
-3ca fn_cleare: 4a    ;CLR WR
-3cb            7f    ;CLR OVFL
-3cc            f1    ;CLR MODE + CLR MENT + RET
+fn_cleare: = $4a    ;CLR WR
+= $7f    ;CLR OVFL
+= $f1    ;CLR MODE + CLR MENT + RET
 
 ;
 ;"Diamond" - subtotal: print the number or the subtotal
 ;
-3cd fn_diamnd: 6c d5 ;JPC MODENN,dm_prn2			;jump in entry mode, print the number, and close the entry mode
-3cf            75 d3 ;JPC MODEMD,dm_prn1			;jump in mul/div mode, print the number, and init
-3d1            0b    ;MOV WR,SR					;in add/sub mode, recall the subtotal number from SR and clear SR
-3d2            46    ;CLR SR
-3d3 dm_prn1:   fc    ;PRN FPAR
-3d4            ef    ;CLR MENT + CLR OVFL + RET
-3d5 dm_prn2:   fd    ;PRN ROUND,FPAR
-3d6            f1    ;CLR MODE + CLR MENT + RET
+fn_diamnd: = $6c 
+= $d5 ;JPC MODENN,dm_prn2			;jump in entry mode, print the number, and close the entry mode
+= $75 
+= $d3 ;JPC MODEMD,dm_prn1			;jump in mul/div mode, print the number, and init
+= $0b    ;MOV WR,SR					;in add/sub mode, recall the subtotal number from SR and clear SR
+= $46    ;CLR SR
+dm_prn1:   = $fc    ;PRN FPAR
+= $ef    ;CLR MENT + CLR OVFL + RET
+dm_prn2:   = $fd    ;PRN ROUND,FPAR
+= $f1    ;CLR MODE + CLR MENT + RET
                
 ;entry address at digit, digit number, minus sign button
 ;		fuction code		parameter
@@ -1297,183 +1357,194 @@ md_prn2:   = $fc    ;PRN FPAR
 ;00		6			0
 ;000		12			0
 
-3d7 fn_digit:  d7    ;DIGIT					;save digit into R13, place of digit point (WR.S1) into R11
+fn_digit:  = $d7    ;DIGIT					;save digit into R13, place of digit point (WR.S1) into R11
 								;at first entry: WR=0, CR.S2=8
-3d8            a9 df ;JPC BIG_DIGIT,dig_dpsgn			;jump at digit point, minus sign
+= $a9 
+= $df ;JPC BIG_DIGIT,dig_dpsgn			;jump at digit point, minus sign
 
-3da dig_numsh: 53    ;SHL WR					;rotate the number into WR
-3db            9a e3 ;JPC NBIG_WR,dig_chkdp			; jump, if there is now overflow
-3dd            5f    ;SHR WR					;at overflow, rotate back the number (additional digits are lost)
-3de            f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
+dig_numsh: = $53    ;SHL WR					;rotate the number into WR
+= $9a 
+= $e3 ;JPC NBIG_WR,dig_chkdp			; jump, if there is now overflow
+= $5f    ;SHR WR					;at overflow, rotate back the number (additional digits are lost)
+= $f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
 
-3df dig_dpsgn: bc 5f ;JPC ODDPAR,dp_mark			;digit point button is pressed
+dig_dpsgn: = $bc 
+= $5f ;JPC ODDPAR,dp_mark			;digit point button is pressed
 
-3e1            e7    ;NEG WR					;minus sign button is pressed
-3e2            f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
+= $e7    ;NEG WR					;minus sign button is pressed
+= $f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
 
-3e3 dig_chkdp: 74 e8 ;JPC MENTDP,dig_incdp			;if digit point is already entered, jump to adjust it
-3e5            a7 ee ;JMP dig_nextd
+dig_chkdp: = $74 
+= $e8 ;JPC MENTDP,dig_incdp			;if digit point is already entered, jump to adjust it
+= $a7 
+= $ee ;JMP dig_nextd
 
-3e7            00    ;(unimplemented, never used)
+= $00    ;(unimplemented, never used)
 
-3e8 dig_incdp: ca    ;INC DPCNT					;adjust the digit point place with one digit more
-3e9            ce ed ;JPC NBIG_DPCNT,dig_savdp
-3eb            dd    ;DEC DPCNT					;if already too much digit entered after the digit point,
-3ec            5f    ;SHR WR					; ignore the new digit
-3ed dig_savdp: c2    ;SET DP_WR					;save the place of digit point
+dig_incdp: = $ca    ;INC DPCNT					;adjust the digit point place with one digit more
+= $ce 
+= $ed ;JPC NBIG_DPCNT,dig_savdp
+= $dd    ;DEC DPCNT					;if already too much digit entered after the digit point,
+= $5f    ;SHR WR					; ignore the new digit
+dig_savdp: = $c2    ;SET DP_WR					;save the place of digit point
 
-3ee dig_nextd: b7 da ;JPC ROTFC,dig_numsh			;function code contains, how many '0's has to be entered yet
+dig_nextd: = $b7 
+= $da ;JPC ROTFC,dig_numsh			;function code contains, how many '0's has to be entered yet
 								;implementation of button '00' and '000' is here
-3f0            f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
+= $f3    ;CLR MODE + RET				;mark that new number is entered since the last operation, and exit
 
 ;
 ;Exchange function:	CR=WR, WR <- RR <- DR <- WR
 ;
-3f1 fn_ex:     fd    ;PRN ROUND,FPAR
-3f2            02    ;MOV CR,WR					;CR=WR (WR is saved to CR)
-3f3            0e    ;MOV WR,DR
-3f4            03    ;MOV RR,WR					;RR=DR
-3f5            0c    ;MOV WR,CR
-3f6            04    ;MOV DR,WR					;DR=saved WR
-3f7            0d    ;MOV WR,RR					;WR=RR
-3f8            f1    ;CLR MODE + CLR MENT + RET
+fn_ex:     = $fd    ;PRN ROUND,FPAR
+= $02    ;MOV CR,WR					;CR=WR (WR is saved to CR)
+= $0e    ;MOV WR,DR
+= $03    ;MOV RR,WR					;RR=DR
+= $0c    ;MOV WR,CR
+= $04    ;MOV DR,WR					;DR=saved WR
+= $0d    ;MOV WR,RR					;WR=RR
+= $f1    ;CLR MODE + CLR MENT + RET
 
 ;
 ;Clear memory:	recall (WR=MR), print and clear (R7=0)
 ;
-3f9 fn_clrmem: 09    ;MOV WR,MR
-3fa            fa    ;PRN FPAR,MEM
-3fb            44    ;CLR MR
-3fc            f1    ;CLR MODE + CLR MENT + RET
+fn_clrmem: = $09    ;MOV WR,MR
+= $fa    ;PRN FPAR,MEM
+= $44    ;CLR MR
+= $f1    ;CLR MODE + CLR MENT + RET
 
 ;
 ;Recall memory:	recall (WR=MR) and print
 ;
-3fd fn_rm:     09    ;MOV WR,MR
-3fe            fa    ;PRN FPAR,MEM
-3ff do_exit:   f1    ;CLR MODE + CLR MENT + RET
+fn_rm:     = $09    ;MOV WR,MR
+= $fa    ;PRN FPAR,MEM
+do_exit:   = $f1    ;CLR MODE + CLR MENT + RET
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Optional program for making the SQRT function
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-400 20 28           fim 0< $28		;pseudo code entry address of the SQRT function
+*= 0x400
+$400: fim 0< $28		;pseudo code entry address of the SQRT function
 
 ;
 ;Similar pseudo code interpreter implementation, like at $04b-05f, just uses the pseudo instruction codes from address range $400-$4ff
 ;
 
-402 11 06 jcnb_402: jcn TZ $406		;wait for the inactive printer drum sector signal
-404 50 b0           jms $0b0		;keyboard handling
-406 26 20 jcnf_406: fim 3< $20
-408 28 10           fim 4< $10
-40a 32              fin 1<		;fetch pseudo instruction code into R2R3
-40b f0              clb
-40c 54 50           jms $450		;execute the associated routine
-40e 71 11 jcnb_40e: isz 1 $411		;inc R0R1, pseudo code instruction pointer
-410 60              inc 0
-411 14 02 iszf_411: jcn AZ $402		;jump back, if ACC returned by the pseudo instruction was 0
-413 f7              tcc
-414 14 0e           jcn AZ $40e		;if CY returned by the pseudo instruction was 0, R0R1 is incremented again
-416 30              fin 0<		;if CY was set to 1, read the pseudo code jump address
-417 44 02           jun $402		;jump to continue the pseudo code from the modified address
+$402: jcn TZ $406		;wait for the inactive printer drum sector signal
+          jms $0b0		;keyboard handling
+$406: fim 3< $20
+          fim 4< $10
+          fin 1<		;fetch pseudo instruction code into R2R3
+          clb
+          jms $450		;execute the associated routine
+$40e: isz 1 $411		;inc R0R1, pseudo code instruction pointer
+          inc 0
+$411: jcn AZ $402		;jump back, if ACC returned by the pseudo instruction was 0
+          tcc
+          jcn AZ $40e		;if CY returned by the pseudo instruction was 0, R0R1 is incremented again
+          fin 0<		;if CY was set to 1, read the pseudo code jump address
+          jun $402		;jump to continue the pseudo code from the modified address
 
-419    00 00 00 00 00 00 00		;unused NOPs
-420 00 00 00 00 00 00 00 00
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ;Square root pseudo code implementation
 ;----------------------------------------------------------------------------------------------------------------------------------
-
-428 sq_start:  51    ;PRN FCODE					;print number with function code (9: SQRT)
-429            a7    ;MOV CR,WR					;save the number to the constant register
-42a            53    ;CLR RR					;clear result register
-42b            61 3e ;JPC ZERO_WR,sq_exit			;jump, if number is zero (the result will be also zero)
-42d            65    ;CLR DIGIT + GET DP_WR 			;R10R11=place of digit point
-42e sq_bshift: 63 44 ;JPC NBIG_WR,sq_lshift			;number is adjusted to the leftmost position
-430            9c    ;SHR WR					;one digit overshift is corrected back
-431            5b    ;MOV DR,WR					;remainder (DR) is initialized to the shifted number
-432            55    ;CLR WR					;initial subtrahend (WR) is cleared
-433            6a 36 ;SET LPCSQRT + SET DPCNTSQRT + JPC EVENDP,sq_loopns	;R15=13, sqrt digit point calculation
+*= 0x428
+sq_start:  = $51    ;PRN FCODE					;print number with function code (9: SQRT)
+= $a7    ;MOV CR,WR					;save the number to the constant register
+= $53    ;CLR RR					;clear result register
+= $61 
+= $3e ;JPC ZERO_WR,sq_exit			;jump, if number is zero (the result will be also zero)
+= $65    ;CLR DIGIT + GET DP_WR 			;R10R11=place of digit point
+sq_bshift: = $63 
+= $44 ;JPC NBIG_WR,sq_lshift			;number is adjusted to the leftmost position
+= $9c    ;SHR WR					;one digit overshift is corrected back
+= $5b    ;MOV DR,WR					;remainder (DR) is initialized to the shifted number
+= $55    ;CLR WR					;initial subtrahend (WR) is cleared
+= $6a 
+= $36 ;SET LPCSQRT + SET DPCNTSQRT + JPC EVENDP,sq_loopns	;R15=13, sqrt digit point calculation
 								;jump if original digit point position was even
-435 sq_loopsh: 58    ;SHL DR					;multiplication by 10 of the remaining part
+sq_loopsh: = $58    ;SHL DR					;multiplication by 10 of the remaining part
 								;(and possible additional shift if it is needed)
-436 sq_loopns: 7a    ;INC WR_POS				;increment the subtrahend (WR from position in R15) by 1
-437            5d 41 ;SUB DR,WR + JPC NNEG,sq_rptinc + INC DIGIT;remainder is decremented by the subtrahend (DR=DR-WR)
+sq_loopns: = $7a    ;INC WR_POS				;increment the subtrahend (WR from position in R15) by 1
+= $5d 
+= $41 ;SUB DR,WR + JPC NNEG,sq_rptinc + INC DIGIT;remainder is decremented by the subtrahend (DR=DR-WR)
 								;and jump, if the result is not negative
 								;digit counter (R13) is incremented too
-439            5f    ;ADD DR,WR					;add the subtrahend to get back the last non negative value
-43a            85    ;DEC WR_POS				;decrement the subtrahend by one (prepare it for the next round)
-43b            57    ;SHL RR					;shift the new digit into the number, R13 is cleared too
-43c            98 35 ;JPC NZERO_LPCSQRT,sq_loopsh + DEC LPCSQRT	;decrement R15, and jump, except when R15 becomes 0
+= $5f    ;ADD DR,WR					;add the subtrahend to get back the last non negative value
+= $85    ;DEC WR_POS				;decrement the subtrahend by one (prepare it for the next round)
+= $57    ;SHL RR					;shift the new digit into the number, R13 is cleared too
+= $98 
+= $35 ;JPC NZERO_LPCSQRT,sq_loopsh + DEC LPCSQRT	;decrement R15, and jump, except when R15 becomes 0
 								;(next round calculates with one more digit)
-43e sq_exit:   a9    ;MOV DR,WR	(MOV WR,CR ???)			;??? subtrahend is saved (originally it may be WR=CR)
-43f            5b    ;MOV DR,WR					;??? duplicated, but not disturbing code
-440            9f    ;CLR MOP + RET_BPC				;return back to basic pseudo code interpreter to address $40
-441 sq_rptinc: 7a    ;INC WR_POS				;increment the subtrahend by 1 (WR from position in R15)
-442            96 36 ;JMP sq_loopns				;jump back
+sq_exit:   = $a9    ;MOV DR,WR	(MOV WR,CR ???)			;??? subtrahend is saved (originally it may be WR=CR)
+= $5b    ;MOV DR,WR					;??? duplicated, but not disturbing code
+= $9f    ;CLR MOP + RET_BPC				;return back to basic pseudo code interpreter to address $40
+sq_rptinc: = $7a    ;INC WR_POS				;increment the subtrahend by 1 (WR from position in R15)
+= $96 
+= $36 ;JMP sq_loopns				;jump back
 
-444 sq_lshift: 59    ;SHL WR					;rotate number into left position
-445            93 2e ;INC DPCNT + JMP sq_bshift			;increment R10R11, and jump back
+sq_lshift: = $59    ;SHL WR					;rotate number into left position
+= $93 
+= $2e ;INC DPCNT + JMP sq_bshift			;increment R10R11, and jump back
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 
-447                      00		;unused NOPs
-448 00 00 00 00 00 00 00 00   
+*= 0x450
+$450: jin 1<		;jump to the pseudo instruction code associated routine
 
-450 33    jmsf_450: jin 1<		;jump to the pseudo instruction code associated routine
-
-451 41 fe vmbc_451: jun $1fe		;PRN FCODE
-453 41 48 vmbc_453: jun $148		;CLR RR
-455 41 4a vmbc_455: jun $14a		;CLR WR
-457 68    vmbc_457: inc 8		;SHL RR
-458 68    vmbc_458: inc 8		;SHL DR
-459 41 53 vmbc_459: jun $153		;SHL WR
-45b 41 04 vmbc_45b: jun $104		;MOV DR,WR
-45d 41 34 vmbc_45d: jun $134		;SUB DR,WR + JPC NNEG + INC DIGIT
-45f 41 21 vmbc_45f: jun $121		;ADD DR,WR
-461 41 a2 vmbc_461: jun $1a2		;JPC ZERO_WR
-463 41 9a vmbc_463: jun $19a		;JPC NBIG_WR
+$451: jun $1fe		;PRN FCODE
+$453: jun $148		;CLR RR
+$455: jun $14a		;CLR WR
+$457: inc 8		;SHL RR
+$458: inc 8		;SHL DR
+$459: jun $153		;SHL WR
+$45b: jun $104		;MOV DR,WR
+$45d: jun $134		;SUB DR,WR + JPC NNEG + INC DIGIT
+$45f: jun $121		;ADD DR,WR
+$461: jun $1a2		;JPC ZERO_WR
+$463: jun $19a		;JPC NBIG_WR
 
 ;QPC_65:	CLR DIGIT + GET DP_WR
 
-465 bd    vmbc_465: xch 13		;clear digit (R13=0)
-466 29              src 4<
-467 ed              rd1
-468 bb              xch 11		;R11=WR.S1, get the digit point place of WR
-469 c0              bbl 0
+$465: xch 13		;clear digit (R13=0)
+          src 4<
+          rd1
+          xch 11		;R11=WR.S1, get the digit point place of WR
+          bbl 0
 
 ;QPC_6A:	SET LPCSQRT + SET DPCNTSQRT + JPC EVENDP
 ;		R15=13, R10R11=(R10R11/2+6+((R10R11 mod 2))), jump, if original R10R11 was even
 
-46a 2e 6d vmbc_46a: fim 7< $6d		;R14=6, R15=13
-46c ab              ld 11
-46d b7              xch 7		;R7=R11 (save original R11 into R7)
-46e ba              xch 10		;ACC=R10  (R10=0 [previous R7])
-46f f6              rar			;CY=R10.bit0
-470 ab              ld 11
-471 f6              rar			;ACC=8*(R10.bit0)+(R11 div 2),  CY=(R11 mod 2)
-472 8e              add 14		;ACC=8*(R10.bit0)+(R11 div 2)+(R11 mod 2)+6, CY=overflow
-473 bb              xch 11		;store it to R11
-474 f7              tcc			;ACC=overflow
-475 ba              xch 10		;R10=0 or 1
-476 b7              xch 7		;ACC=original R11
-477 f6              rar			;CY=(R11 mod 2), rotate bit 0 into CY
-478 f3              cmc			;CY=1-(R11 mod 2), negate the pseudo jump condition
-479 c1              bbl 1		;prepare pseudo code jump
+$46a: fim 7< $6d		;R14=6, R15=13
+          ld 11
+          xch 7		;R7=R11 (save original R11 into R7)
+          xch 10		;ACC=R10  (R10=0 [previous R7])
+          rar			;CY=R10.bit0
+          ld 11
+          rar			;ACC=8*(R10.bit0)+(R11 div 2),  CY=(R11 mod 2)
+          add 14		;ACC=8*(R10.bit0)+(R11 div 2)+(R11 mod 2)+6, CY=overflow
+          xch 11		;store it to R11
+          tcc			;ACC=overflow
+          xch 10		;R10=0 or 1
+          xch 7		;ACC=original R11
+          rar			;CY=(R11 mod 2), rotate bit 0 into CY
+          cmc			;CY=1-(R11 mod 2), negate the pseudo jump condition
+          bbl 1		;prepare pseudo code jump
 
 ;QPC_7A:	INC WR_POS	increment WR from position in R15
 
-47a af    vmbc_47a: ld 15
-47b b9              xch 9		;R9=R15
-47c fa              stc
-47d d0              ldm 0		;clear ACC
-47e 29              src 4<
-47f eb              adm
-480 fb              daa			;add carry to number digit by digit
-481 e0              wrm
-482 79 7d           isz 9 $47d		;loop back for the next digits
-484 c0              bbl 0
+$47a: ld 15
+          xch 9		;R9=R15
+          stc
+$47d:     ldm 0		;clear ACC
+          src 4<
+          adm
+          daa			;add carry to number digit by digit
+          wrm
+          isz 9 $47d		;loop back for the next digits
+          bbl 0
 
 ;QPC_85:	DEC WR_POS	Decrement WR from position in R15
 ;
@@ -1484,67 +1555,55 @@ md_prn2:   = $fc    ;PRN FPAR
 ;ACC 0		ACC=0, CY=0		ACC=15->9, CY=1
 ;ACC 1..9	ACC=ACC, CY=0		ACC=ACC-1, CY=0
 
-485 af    vmbc_485: ld 15
-486 b9              xch 9		;R9=R15
-487 f3              cmc			;at first: set CY=1, later complement the borrow bit
-488 29              src 4<
-489 e9              rdm			;read next digit from WR
-48a 97              sub 7		;subtract R7 (=0) from it, ACC=ACC+15+(1-CY)
-48b 12 8e           jcn C1 $48e		;jump, if there is no borrow
-48d d9              ldm 9		;set the number to 9 (BCD adjust)
-48e e0              wrm			;write back the result
-48f 79 87           isz 9 $487		;loop back for the next digits
-491 f0              clb
-492 c0              bbl 0
+$485: ld 15
+          xch 9		;R9=R15
+$487:     cmc			;at first: set CY=1, later complement the borrow bit
+          src 4<
+          rdm			;read next digit from WR
+          sub 7		;subtract R7 (=0) from it, ACC=ACC+15+(1-CY)
+          jcn C1 $48e		;jump, if there is no borrow
+          ldm 9		;set the number to 9 (BCD adjust)
+$48e:     wrm			;write back the result
+          isz 9 $487		;loop back for the next digits
+          clb
+          bbl 0
 
 ;QPC_93:	INC DPCNT + JMP		Increment digit point counter (R10R11) and unconditional jump
 ;QPC_96:	unconditional jump
 
-493 7b 96 vmbc_493: isz 11 $496		;inc R11, and skip if result is nonzero
-495 6a              inc 10		;inc R10
-496 fa    vmbc_496: stc			;set CY=1, the pseudo jump condition
-497 c1              bbl 1		;prepare pseudo code jump
+$493: isz 11 $496		;inc R11, and skip if result is nonzero
+          inc 10		;inc R10
+$496: stc			;set CY=1, the pseudo jump condition
+          bbl 1		;prepare pseudo code jump
 
 ;QPC_98:	JPC NZERO_LPCSQRT + DEC LPCSQRT		decrement R15, and jump, except when R15 was 0
 
-498 af    vmbc_498: ld 15		;decrement R15, sqrt loop counter
-499 f8              dac
-49a bf              xch 15		;the pseudo jump condition is set, if R15 was nonzero
-49b c1              bbl 1		;prepare pseudo code jump
+$498: ld 15		;decrement R15, sqrt loop counter
+          dac
+          xch 15		;the pseudo jump condition is set, if R15 was nonzero
+          bbl 1		;prepare pseudo code jump
 
 ;QPC_9C:	SHR WR		Right shift of working register
-49c 41 5f vmbc_49c: jun $15f		;one digit right shift of WR with R13 (0 is shifted from left)
+$49c: jun $15f		;one digit right shift of WR with R13 (0 is shifted from left)
 
-49e 00              nop
+          nop
 
 ;QPC_9F:	CLR MOP + RET_BPC	Clear divide/multiply operation and return back to basic pseudo code interpreter
 
-49f 27    vmbc_49f: src 3<		;clear DR.S2
-4a0 e6              wr2
-4a1 20 40           fim 0< $40		;entry address is $40
-4a3 26 00           fim 3< $00
-4a5 40 4b           jun $04b		;jump back to basic pseudo code interpreter
+$49f: src 3<		;clear DR.S2
+          wr2
+          fim 0< $40		;entry address is $40
+          fim 3< $00
+          jun $04b		;jump back to basic pseudo code interpreter
 
 ;QPC_A7:	MOV CR,WR	Move working register into constant register (CR=WR)
-4a7 41 02 vmbc_4a7: jun $102		;CR=WR
+$4a7: jun $102		;CR=WR
 
 ;QPC_A9:	MOV DR,WR (or MOV WR,CR)
 ;	Move working register into dividend/multiplicand register (DR=WR), but it is very probable that this would be
 ;	move constant register into working register (WR=CR)
 
-4a9 41 04 vmbc_4a9: jun $104		;Maybe it is "jun $10c"
+$4a9: jun $104		;Maybe it is "jun $10c"
 					;(the difference is only one bit in the code - was the source ROM damaged?)
 
-4ab          00 00 00 00 00		;Unused NOPs
-4b0 00 00 00 00 00 00 00 00
-4b8 00 00 00 00 00 00 00 00
-4c0 00 00 00 00 00 00 00 00
-4c8 00 00 00 00 00 00 00 00
-4d0 00 00 00 00 00 00 00 00
-4d8 00 00 00 00 00 00 00 00
-4e0 00 00 00 00 00 00 00 00
-4e8 00 00 00 00 00 00 00 00
-4f0 00 00 00 00 00 00 00 00
-4f8 00 00 00 00 00 00 00 00
-
-;----------------------------------------------------------------------------------------------------------------------------------
+;4ab          00 00 00 00 00		;Unused NOPs
