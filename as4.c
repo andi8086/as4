@@ -562,7 +562,6 @@ int main(int argc, char **argv)
 			do {
 				*l = (char) toupper((char) *l);
 			} while(*(++l));
-			printf("%s\n", line);
 			compile(line);
 			if (curr_ip != old_ip) {
 				listing[old_ip] = malloc(strlen(old_line) + 32);
