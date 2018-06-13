@@ -505,7 +505,7 @@ void compile(char *line)
 		if (strcmp(token, "*=") == 0) {
 			curr_ip = parse_12bit();
 			old_ip = curr_ip;
-		}
+		} else
 		if (strcmp(token, "=") == 0) {
 			prog_mem[curr_ip++] = parse_byte();
 		}
