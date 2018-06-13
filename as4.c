@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -165,6 +166,13 @@ uint8_t parse_byte()
 	if (!imm) {
 		SYNTAX_ERR("missing immediate data.\n");
 		exit(-1);
+	}
+	if (*imm == '$') {
+		char *i = malloc(strlen(imm) + 2);
+		strcpy(i+1, imm);
+		*i = '0';
+		*(i+1) = 'x';
+		imm = i;
 	}
 	long int i = strtol(imm, &end, 0);
 	if (*end != '\0') {
@@ -498,6 +506,9 @@ void compile(char *line)
 			curr_ip = parse_12bit();
 			old_ip = curr_ip;
 		}
+		if (strcmp(token, "=") == 0) {
+			prog_mem[curr_ip++] = parse_byte();
+		}
 		else {
 			SYNTAX_ERR("unknown opcode: %s\n", token);
 			exit(-1);
@@ -547,6 +558,11 @@ int main(int argc, char **argv)
 		if (strlen(line) != 0) {
 			old_ip = curr_ip;
 			char *old_line = strdup(line);
+			char *l = line;
+			do {
+				*l = (char) toupper((char) *l);
+			} while(*(++l));
+			printf("%s\n", line);
 			compile(line);
 			if (curr_ip != old_ip) {
 				listing[old_ip] = malloc(strlen(old_line) + 32);
