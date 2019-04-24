@@ -448,6 +448,7 @@ void compile(char *line)
 				SYNTAX_ERR("output ports are 8-31\n");
 				exit(1);
 			}
+			prog_mem[curr_ip++] = 0x51 | i << 1;
 		} else
 		if (strcmp(token, "*=") == 0) {
 			curr_ip = parse_14bit();
