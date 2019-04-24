@@ -296,7 +296,7 @@ void compile(char *line)
 		} else
 		if (strcmp(token, "ORI") == 0) {
 			uint8_t i = parse_byte();
-			prog_mem[curr_ip++] = 0x30;
+			prog_mem[curr_ip++] = 0x34;
 			prog_mem[curr_ip++] = i;
 		} else
 		if (strcmp(token, "CMP") == 0) {
