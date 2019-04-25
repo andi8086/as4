@@ -270,7 +270,7 @@ void compile(char *line)
 		} else
 		if (strcmp(token, "ANI") == 0) {
 			uint8_t i = parse_byte();
-			prog_mem[curr_ip++] = 0x20;
+			prog_mem[curr_ip++] = 0x24;
 			prog_mem[curr_ip++] = i;
 		} else
 		if (strcmp(token, "XRA") == 0) {
