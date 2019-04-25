@@ -429,7 +429,7 @@ void compile(char *line)
 				SYNTAX_ERR("address must be 0-7\n");
 				exit(1);
 			}
-			prog_mem[curr_ip++] = 0x05;
+			prog_mem[curr_ip++] = 0x05 | (i << 3);
 		} else
 		if (strcmp(token, "HLT") == 0) {
 			prog_mem[curr_ip++] = 0x00;
