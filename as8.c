@@ -450,6 +450,10 @@ void compile(char *line)
 			}
 			prog_mem[curr_ip++] = 0x51 | i << 1;
 		} else
+		if (strcmp(token, ".BYTE") == 0) {
+			uint8_t i = parse_byte();
+			prog_mem[curr_ip++] = i;
+		} else
 		if (strcmp(token, "*=") == 0) {
 			curr_ip = parse_14bit();
 			old_ip = curr_ip;
