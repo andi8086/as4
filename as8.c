@@ -1,7 +1,7 @@
 /* 
 SPDX short identifier: MIT
 
-Copyright 2018 Andreas J. Reichel
+Copyright 2018,2019 Andreas J. Reichel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
