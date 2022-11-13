@@ -1,7 +1,7 @@
 /* 
 SPDX short identifier: MIT
 
-Copyright 2013,2018,2019 Andreas J. Reichel
+Copyright 2013,2018,2019,2022 Andreas J. Reichel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -34,7 +34,7 @@ SOFTWARE.
 	fprintf(stderr, "Syntax error in line %d: "format, \
 	curr_line, ##__VA_ARGS__)
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 uint16_t curr_ip;
 uint16_t old_ip;
@@ -119,7 +119,6 @@ uint8_t parse_reg()
 		exit(-1);
 	}
 }
-
 
 uint8_t parse_regpair()
 {
@@ -235,10 +234,20 @@ void parse_target_addr8()
 		SYNTAX_ERR("missing jump goal\n");
 		exit(-1);
 	}
-	label_ref[curr_refs] = strdup(goal);
-	label_ref_loc[curr_refs] = curr_ip;
-	curr_refs++;
-	prog_mem[curr_ip++] = 0x00;
+
+        if (*goal == '$') {
+                long addr = strtol(goal+1, NULL, 16);
+                if (addr > 255) {
+                        SYNTAX_ERR("jump target out of range\n");
+                        exit(-1);
+                }
+                prog_mem[curr_ip++] = (uint8_t)addr;
+        } else {
+                label_ref[curr_refs] = strdup(goal);
+                label_ref_loc[curr_refs] = curr_ip;
+                curr_refs++;
+                prog_mem[curr_ip++] = 0x00;
+        }
 }
 
 void parse_target_addr12()
@@ -248,10 +257,20 @@ void parse_target_addr12()
 		SYNTAX_ERR("missing jump goal\n");
 		exit(-1);
 	}
-	label_ref[curr_refs] = strdup(goal);
-	label_ref_loc[curr_refs] = curr_ip;
-	curr_refs++;
-	prog_mem[curr_ip++] = 0x00;
+        if (*goal == '$') {
+                long addr = strtol(goal+1, NULL, 16);
+                if (addr > 4095) {
+                        SYNTAX_ERR("jump target out of range\n");
+                        exit(-1);
+                }
+                prog_mem[curr_ip-1] |= (uint8_t)((addr >> 8) & 0xF);
+                prog_mem[curr_ip++] = (uint8_t)addr;
+        } else { 
+                label_ref[curr_refs] = strdup(goal);
+                label_ref_loc[curr_refs] = curr_ip;
+                curr_refs++;
+                prog_mem[curr_ip++] = 0x00;
+        }
 }
 
 uint8_t parse_cond()
@@ -524,7 +543,7 @@ void compile(char *line)
 int main(int argc, char **argv)
 {
 	fprintf(stdout, "MCS-4 Assembler for i4004\n");
-	fprintf(stdout, "(c)2013,2018 by Andreas J. Reichel\n");
+	fprintf(stdout, "(c)2013,2018,2019,2022 by Andreas J. Reichel\n");
 	fprintf(stdout, "Version "VERSION"\n\n");
 	if (argc < 2) {
 		fprintf(stdout, "Syntax: as4 file.s\n");
