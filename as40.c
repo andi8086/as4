@@ -575,7 +575,7 @@ int main(int argc, char **argv)
         memset(prog_mem, 0xFF, sizeof(prog_mem));
 
         fprintf(stdout, "MCS-40 Assembler for i4040\n");
-        fprintf(stdout, "(c)2013,2018 by Andreas J. Reichel\n");
+        fprintf(stdout, "(c)2013-2024 by Andreas J. Reichel\n");
         fprintf(stdout, "Version "VERSION"\n\n");
         if (argc < 2) {
                 fprintf(stdout, "Syntax: as40 file.s\n");
