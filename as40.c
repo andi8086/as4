@@ -1,7 +1,7 @@
-/* 
+/*
 SPDX short identifier: MIT
 
-Copyright 2013,2018,2019 Andreas J. Reichel
+Copyright 2013,2018,2019,2022,2024 Andreas J. Reichel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -159,12 +159,17 @@ uint8_t parse_regpair()
 
 uint8_t parse_byte()
 {
+        bool complement = false;
         char *end;
         errno = 0;
         char *imm = strtok(NULL, " \t,");
         if (!imm) {
                 SYNTAX_ERR("missing immediate data.\n");
                 exit(-1);
+        }
+        if (imm[0] == '~') {
+                complement = true;
+                imm++;
         }
         long int i = strtol(imm, &end, 0);
         if (*end != '\0') {
@@ -175,7 +180,11 @@ uint8_t parse_byte()
                 SYNTAX_ERR("value out of range: %s\n", imm);
                 exit(-1);
         }
-        return (uint8_t) (((int8_t) i) & 0xFF);
+        uint8_t retval = (uint8_t)(((int8_t)i) & 0xFF);
+        if (complement) {
+                retval = retval ^ 0xFF;
+        }
+        return retval;
 }
 
 uint16_t parse_12bit()
@@ -201,12 +210,17 @@ uint16_t parse_12bit()
 
 uint8_t parse_nibble()
 {
+        bool complement = false;
         char *end;
         errno = 0;
         char *imm = strtok(NULL, " \t,");
         if (!imm) {
                 SYNTAX_ERR("missing immediate data.\n");
                 exit(-1);
+        }
+        if (imm[0] == '~') {
+                complement = true;
+                imm++;
         }
         long int i = strtol(imm, &end, 0);
         if (*end != '\0') {
@@ -216,6 +230,9 @@ uint8_t parse_nibble()
         if (i < 0 || i > 15) {
                 SYNTAX_ERR("value out of range: %s\n", imm);
                 exit(-1);
+        }
+        if (complement) {
+                i = i ^ 0xF;
         }
         return (uint8_t) (i & 0x0F);
 }
