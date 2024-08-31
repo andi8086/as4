@@ -554,6 +554,8 @@ void compile(char *line)
 
 int main(int argc, char **argv)
 {
+        /* initialize prog_mem with 0xFF */
+        memset(prog_mem, 0xFF, sizeof(prog_mem));
 
         fprintf(stdout, "MCS-40 Assembler for i4040\n");
         fprintf(stdout, "(c)2013,2018 by Andreas J. Reichel\n");
