@@ -33,7 +33,7 @@ SOFTWARE.
         fprintf(stderr, "Syntax error in line %d: "format, \
         curr_line, ##__VA_ARGS__)
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 uint16_t curr_ip;
 uint16_t old_ip;
