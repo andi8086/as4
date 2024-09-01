@@ -385,7 +385,7 @@ void compile(char *line)
                         parse_target_addr12();
                 } else
                 if (strcmp(token, "JMS") == 0) {
-                        prog_mem[curr_ip++] = 0x41;
+                        prog_mem[curr_ip++] = 0x50;
                         parse_target_addr12();
                 } else
                 if (strcmp(token, "INC") == 0) {
