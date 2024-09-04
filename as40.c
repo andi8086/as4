@@ -170,7 +170,14 @@ uint8_t parse_byte()
         if (imm[0] == '~') {
                 complement = true;
                 imm++;
+        } else
+        if (imm[0] == '@') {
+                label_ref[curr_refs] = strdup(imm + 1);
+                label_ref_loc[curr_refs] = curr_ip;
+                curr_refs++;
+                return 0;
         }
+
         long int i = strtol(imm, &end, 0);
         if (*end != '\0') {
                 SYNTAX_ERR("invalid number format: %s\n", imm);
@@ -300,6 +307,30 @@ uint8_t parse_cond()
         }
 }
 
+char *parse_string(char *line)
+{
+        char *str;
+        errno = 0;
+        char *imm = strpbrk(line, " \t,");
+        if (!imm) {
+                SYNTAX_ERR("missing immediate data.\n");
+                exit(-1);
+        }
+        imm = strpbrk(line, "\"");
+        if (!imm) {
+                SYNTAX_ERR("Expecting \"string\"", imm);
+                exit(-1);
+        }
+        str = imm + 1;
+        imm = strpbrk(str, "\"");
+        if (!imm) {
+                SYNTAX_ERR("Expecting \"string\"", imm);
+                exit(-1);
+        }
+        *imm = 0;
+        return str;
+}
+
 void compile(char *line)
 {
         // ignore after a ";" as comment
@@ -327,6 +358,7 @@ void compile(char *line)
         while (line[strlen(line)-1] == '\t') line[strlen(line)-1] = 0;
 
         if (!*line) return;
+        char *backup_line = strdup(line);
         // find first token
         char *token = strtok(line, " \t");
         if (token) {
@@ -556,6 +588,13 @@ void compile(char *line)
                 if (strcmp(token, "*=") == 0) {
                         curr_ip = parse_12bit();
                         old_ip = curr_ip;
+                } else
+                if (strcmp(token, ".asciiz") == 0) {
+                        char *str = parse_string(backup_line);
+                        memcpy(&prog_mem[curr_ip], str, strlen(str) + 1);
+                        curr_ip += strlen(str) + 1;
+                        free(backup_line);
+                        return;
                 }
                 else {
                         SYNTAX_ERR("unknown opcode: %s\n", token);
@@ -567,6 +606,7 @@ void compile(char *line)
                         exit(-1);
                 }
         }
+        free(backup_line);
 }
 
 int main(int argc, char **argv)
@@ -610,11 +650,39 @@ int main(int argc, char **argv)
                         old_ip = curr_ip;
                         char *old_line = strdup(line);
                         compile(line);
+                        if (strstr(old_line, ".asciiz")) {
+                                listing[old_ip] = malloc(strlen(old_line) + 4096);
+                                sprintf(listing[old_ip], "%03X ", old_ip);
+                                uint16_t i;
+                                char *curr = listing[old_ip];
+                                curr += strlen(curr);
+                                uint16_t byte_count = 0;
+                                for (i = old_ip; i < curr_ip; i++) {
+                                        byte_count++;
+                                        sprintf(curr, "%02X ", prog_mem[i]);
+                                        curr += strlen(curr);
+                                        if (byte_count % 4 == 0) {
+                                                if (byte_count == 4) {
+                                                        sprintf(curr, "    %s",
+                                                                old_line);
+                                                        curr += strlen(curr);
+                                                }
+
+                                                sprintf(curr, "\n%03X ", i + 1);
+                                                curr += strlen(curr);
+                                        }
+                                        if (curr - listing[old_ip] > 4000) {
+                                                break;
+                                        }
+                                }
+                        } else
                         if (curr_ip != old_ip) {
                                 listing[old_ip] = malloc(strlen(old_line) + 32);
                                 sprintf(listing[old_ip], "%03X  ", old_ip);
                                 for (uint16_t i = old_ip; i < curr_ip; i++) {
-                                        sprintf(listing[old_ip]+4+3*(i-old_ip), "%02X              ", prog_mem[i]);
+                                        sprintf(listing[old_ip]+4+3*(i-old_ip),
+                                                "%02X              ",
+                                                prog_mem[i]);
                                 }
                                 sprintf(listing[old_ip]+12, "%s", old_line);
                         }
@@ -702,6 +770,13 @@ int main(int argc, char **argv)
         }
         for (int i = 0; i < curr_ip; i++) {
                 if (listing[i]) {
+                        /* put in labels int final listing */
+                        for (int l = 0; l < curr_label; l++) {
+                                if (label_addr[l] == i) {
+//                                        fprintf(f, "          %s:\n",
+//                                                label_name[l]);
+                                }
+                        }
                         fprintf(f, "%s\n", listing[i]);
                         free(listing[i]);
                 }
