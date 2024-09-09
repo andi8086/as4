@@ -331,6 +331,22 @@ char *parse_string(char *line)
         return str;
 }
 
+
+void fix_page_fe(void)
+{
+	/* conditional jump instructions if located at
+	 * page offset 0xFE and 0xFF, jump target is
+	 * on the next page instead of the current page
+	 * if the condition is true, which we prevent here,
+	 * by inserting a nop
+	 * to shift the instruction by one byte */
+	if ((curr_ip & 0xFE) == 0xFE) {
+		listing[curr_ip] = malloc(64);
+		sprintf(listing[curr_ip], "%03X %02X            %s", curr_ip, 0, "NOP ; inserted by assembler due to page crossing");
+		prog_mem[curr_ip++] = 0x00;
+	}
+}
+
 void compile(char *line)
 {
         // ignore after a ";" as comment
@@ -366,31 +382,38 @@ void compile(char *line)
                         prog_mem[curr_ip++] = 0x00;
                 } else
                 if (strcmp(token, "JCN") == 0) {
+			fix_page_fe();
                         uint8_t c = parse_cond();
                         prog_mem[curr_ip++] = 0x10 | c;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JTZ") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x11;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JTN") == 0 || strcmp(token, "JTO") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x19;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JCZ") == 0 || strcmp(token, "JNC") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x1A;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JCO") == 0 || strcmp(token, "JOC") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x12;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JAZ") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x14;
                         parse_target_addr8();
                 } else
                 if (strcmp(token, "JNZ") == 0 || strcmp(token, "JAN") == 0) {
+			fix_page_fe();
                         prog_mem[curr_ip++] = 0x1C;
                         parse_target_addr8();
                 } else
@@ -425,6 +448,7 @@ void compile(char *line)
                         prog_mem[curr_ip++] = 0x60 | r;
                 } else
                 if (strcmp(token, "ISZ") == 0) {
+			fix_page_fe();
                         uint8_t r = parse_reg();
                         prog_mem[curr_ip++] = 0x70 | r;
                         parse_target_addr8();
@@ -677,7 +701,11 @@ int main(int argc, char **argv)
                                 }
                         } else
                         if (curr_ip != old_ip) {
-                                listing[old_ip] = malloc(strlen(old_line) + 32);
+                                if (listing[old_ip]) {
+					/* NOP was inserted */
+					old_ip++;
+				}
+				listing[old_ip] = malloc(strlen(old_line) + 32);
                                 sprintf(listing[old_ip], "%03X  ", old_ip);
                                 for (uint16_t i = old_ip; i < curr_ip; i++) {
                                         sprintf(listing[old_ip]+4+3*(i-old_ip),
